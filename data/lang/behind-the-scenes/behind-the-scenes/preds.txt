@@ -1,0 +1,16 @@
+answer:1:color
+scene:1:colors
+scene_2:1:colors
+delete:3:color,colors,colors
+append:3:colors,colors,colors
+reverse:2:colors,colors
+sort:2:colors,colors
+get_color:3:colors,position,color
+first_obj:2:colors,color
+second_obj:2:colors,color
+third_obj:2:colors,color
+same_position:2:position,position
+chain:1:objects
+smaller:2:color,color
+perm:2:colors,colors
+is_sorted:1:colors

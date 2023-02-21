@@ -1,0 +1,3 @@
+reverse(*,*):-.
+reverse(f(X,*),f(X,*)):-.
+reverse(f(X,Xs),R):-reverse(Xs,T),append(T,f(X,*),R).

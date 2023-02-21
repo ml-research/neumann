@@ -1,0 +1,5 @@
+member:2:color,colors
+pos:2:image,image
+scene_img1:1:color
+scene_img2:1:colors
+chain_img2:1:objects_img2

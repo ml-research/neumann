@@ -1,8 +1,9 @@
 import os
+
+import numpy as np
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
-import numpy as np
 from PIL import Image
 
 
@@ -17,7 +18,7 @@ def load_images_and_labels(dataset='member', split='train', base=None):
         folder_names.remove('.DS_Store')
 
     if split == 'train':
-        n = int(len(folder_names)/10)
+        n = int(len(folder_names)/2)
     else:
         n = len(folder_names)
     for folder_name in folder_names[:n]:

@@ -1,8 +1,0 @@
-bject_img1:obj1
-object_img2:obj2,obj3,obj4
-object_img3:obj5,obj6
-objects_img2:**
-objects_img3:***
-color:cyan,gray,red,yellow
-colors:*
-image:img1,img2,img3

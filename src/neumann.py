@@ -36,6 +36,8 @@ class NEUMANN(nn.Module):
         if train:
             self.clause_weights = self.init_random_weights(
                 program_size, clauses, device)
+            print(self.clause_weights)
+            print(clauses)
         else:
             self.clause_weights = self.init_ones_weights(clauses, device)
         self.device = device
@@ -50,13 +52,14 @@ class NEUMANN(nn.Module):
         """Initialize the clause weights with a random initialization.
         """
         # return nn.Parameter(torch.Tensor(np.random.normal(size=(program_size, len(clauses)))).to(device))
+        np.random.seed(0)
         return nn.Parameter(torch.Tensor(np.random.rand(program_size, len(clauses))).to(device))
 
     def _softmax_clauses(self, clause_weights):
         """Take softmax of clause weights to choose M clauses.
         """
         clause_weights_sm = torch.softmax(clause_weights, dim=1)
-        return softor(clause_weights, dim=0)
+        return softor(clause_weights_sm, dim=0)
 
     def _get_clause_weights(self):
         """Compute clause_weights by taking softmax and softor
@@ -247,8 +250,8 @@ class NEUMANN(nn.Module):
             idxs = np.argsort(-v)
             for i in idxs:
                 if v[i] > 0.5:
-                    if not self.atoms[i].pred.name in ['member', 'not_member', 'diff_color', 'right_most'] and\
-                        not self.atoms[i].pred.name in ['perm', 'first_obj', 'second_obj', 'third_obj', 'append', 'sort', 'is_sorted', 'reverse'] and\
+                    if not self.atoms[i].pred.name in ['member', 'delete', 'not_member', 'diff_color', 'right_most'] and\
+                        not self.atoms[i].pred.name in ['perm', 'first_obj', 'second_obj', 'third_obj', 'append', 'sort', 'reverse'] and\
                             not self.atoms[i].pred.name in ['left_of', 'same_position', 'smaller', 'color', 'chain']:
                         print(i, self.atoms[i], ': ', round(v[i], 3))
 
@@ -299,7 +302,7 @@ class NEUMANN(nn.Module):
         import matplotlib.pyplot as plt
         import networkx as nx
         from matplotlib.backends.backend_pdf import PdfPages
-        pp = PdfPages('{}.pdf'.format(name))
+        pp = PdfPages('imgs/{}.pdf'.format(name))
 
         G = self.rgm.networkx_graph
         fig = plt.figure(1, figsize=(60, 60))

@@ -142,7 +142,6 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
             V_0 = I2F(imgs)
             # infer and predict the target probability
             V_T = NEUMANN(V_0)
-            NEUMANN.print_valuation_batch(V_T)
             # get the probabilities of the target atoms
             predicted = get_prob(V_T, NEUMANN, args)
             loss = bce(predicted, target_set)
@@ -165,7 +164,8 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
         rtpt.step()#subtitle=f"loss={loss_i:2.2f}")
         print("loss: ", loss_i)
 
-        if epoch % 5 == 0 and epoch > 0:
+        if epoch % 1 == 0 and epoch > 0:
+            NEUMANN.print_valuation_batch(V_T)
             print("Epoch {}: ".format(epoch))
             NEUMANN.print_program()
         """

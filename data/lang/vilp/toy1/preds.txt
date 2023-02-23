@@ -1,4 +1,0 @@
-p:2:object,object
-q:2:object,object
-r:2:object,object
-s:1:object

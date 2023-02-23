@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch_geometric.nn
 from torch import Tensor
-from torch.nn import Sequential, Linear, ReLU
+from torch.nn import Linear, ReLU, Sequential
 from torch_geometric.nn import MessagePassing
 from torch_scatter import gather_csr, scatter, segment_csr
 
@@ -163,7 +163,7 @@ class MessagePassingModule(torch.nn.Module):
 
         n_nodes = data.x.size(0)
 
-        self.x_atom_list = [data.x[atom_node_idxs].view((batch_size, -1))]
+        self.x_atom_list = [data.x[atom_node_idxs].view((batch_size, -1)).detach().cpu().numpy()[:,1:]]
         x = data.x
 
         # iterate message passing T times
@@ -180,7 +180,7 @@ class MessagePassingModule(torch.nn.Module):
             # step 2: Conj -> Atom
             x_atom_new = self.conj2atom(x=x, edge_weight=edge_weight, edge_index=conj2atom_edge_index, edge_clause_index=edge_clause_index,  atom_node_idxs=atom_node_idxs,
                                         n_nodes=n_nodes, batch_size=batch_size)
-            self.x_atom_list.append(x_atom_new)
+            self.x_atom_list.append(x_atom_new.detach().cpu().numpy()[:,1:])
 
             x = self._cat_x_atom_x_conj(x_atom_new, x_conj_new)
         self.x_atom_final = x_atom_new

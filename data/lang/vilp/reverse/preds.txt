@@ -1,6 +1,5 @@
 append:3:colors,colors,colors
 reverse:2:colors,colors
-append:3:colors,colors,colors
 scene_img1:1:colors
 scene_img2:1:colors
 pos:2:image,image

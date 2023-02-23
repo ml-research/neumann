@@ -1,13 +1,15 @@
 import itertools
 import multiprocessing
-import networkx as nx
 
+import networkx as nx
+import torch
+from joblib import Parallel, delayed
 from torch_geometric.utils import from_networkx
+from tqdm import tqdm
+
 from fol.logic import Clause, Conjunction
 from fol.logic_ops import subs_list, unify
-
-import torch
-from tqdm import tqdm
+from logic_utils import generate_substitutions
 
 
 class ReasoningGraphModule(object):
@@ -24,7 +26,7 @@ class ReasoningGraphModule(object):
         dataset_type (str): A dataset type.
     """
 
-    def __init__(self, clauses, facts, terms, lang, device, max_term_depth=3, init=True, dataset_type=None):
+    def __init__(self, clauses, facts, terms, lang, device, max_term_depth, init=True, dataset_type=None):
         self.lang = lang
         self.clauses = clauses
         self.facts = facts
@@ -44,6 +46,7 @@ class ReasoningGraphModule(object):
             #print('Building reasoning graph for {}'.format(str(clauses)))
             # build reasoning graph
             self.networkx_graph, self.node_labels, self.node_objects = self._build_rg()
+            print("Converting to PyG object ...")
             self.pyg_data = from_networkx(self.networkx_graph)
             self.edge_index = self.pyg_data.edge_index.to(device)
             self.edge_type = torch.tensor(self.pyg_data.etype).to(device)
@@ -89,126 +92,38 @@ class ReasoningGraphModule(object):
             clause (Clause): A clause.
             lang (Language): A language.
         """
-        grounded_clauses = []
-        clause_indices = []
-        # the body has existentially quantified variable!!
-        # e.g. body atoms: [in(img,O1),shape(O1,square)]
-        # theta_list: [(O1,obj1), (O1,obj2)]
-        #theta_list = self.generate_subs(atoms)
-        # print('theta_list:', theta_list)
 
-        # TODO: Grounding
-        print('Grounding clauses ...')
-        for ci, clause in enumerate(clauses):
-            print('Grounding Clause {}: '.format(ci), clause)
-            # TODO: Do we need head unification????
-            if len(clause.all_vars()) == 0:
-                grounded_clauses.append(clause)
-                clause_indices.append(ci)
-            # some variables in the body
-            # TODO: lookup facts!!
-            else:
-                theta_list = self.generate_subs([clause.head] + clause.body)
-                for i, theta in enumerate(theta_list):
-                    # print(i, theta)
-                    grounded_head = subs_list(clause.head, theta)
-                    # check the grounded clause can deduce at least one fact
-                    if grounded_head in self.fact_index_dict:
-                        grounded_body = [subs_list(bi, theta)
-                                         for bi in clause.body]
-                        grounded_clauses.append(
-                            Clause(grounded_head, grounded_body))
-                        clause_indices.append(ci)
-        return grounded_clauses, clause_indices
+        ground_clauses_list = Parallel(n_jobs=-1)([delayed(self._ground_clause)(clause) for clause in clauses])
 
-    def get_terms_by_dtype(self, dtype):
-        return [term for term in self.terms if term.dtype == dtype]
+        all_ground_clauses = []
+        all_clause_indices = []
+        for clause_index, ground_clauses in enumerate(ground_clauses_list):
+            indices = [clause_index] * len(ground_clauses)
+            all_ground_clauses.extend(ground_clauses)
+            all_clause_indices.extend(indices)
 
-    def get_terms_by_dtype_and_depth(self, dtype, depth):
-        return [term for term in self.terms if term.dtype == dtype and term.max_depth() + depth <= self.max_term_depth]
-
-    def generate_subs(self, atoms):
-        """Generate substitutions from given body atoms.
-
-        Generate the possible substitutions from given list of atoms. If the body contains any variables,
-        then generate the substitutions by enumerating constants that matches the data type.
-        !!! ASSUMPTION: The body has variables that have the same data type
-            e.g. variables O1(object) and Y(color) cannot appear in one clause !!!
-
-        Args:
-            body (list(atom)): The body atoms which may contain existentially quantified variables.
-
-        Returns:
-            theta_list (list(substitution)): The list of substitutions of the given body atoms.
-        """
-
-        # extract all variables and corresponding data types from given body atoms
-        var_dtype_list = []
-        for atom in atoms:
-            vd_list = atom.all_vars_and_dtypes()
-            for vd in vd_list:
-                if not vd in var_dtype_list:
-                    var_dtype_list.append(vd)
-
-        var_depth_list = []
-        for atom in atoms:
-            vd_list = atom.all_vars_with_depth()
-            for v, depth in vd_list:
-                if not v in [vd[0] for vd in var_depth_list]:
-                    var_depth_list.append((v, depth))
-                else:
-                    for i, (v_, depth_) in enumerate(var_depth_list):
-                        if v == v_ and depth > depth_:
-                            del var_depth_list[i]
-                            var_depth_list.append((v, depth))
-
-        #var_dtype_set = list(set(var_dtype_list))
-        vars = [vd[0] for vd in var_dtype_list]
-        dtypes = [vd[1] for vd in var_dtype_list]
-        depths = [vd[1] for vd in var_depth_list]
-        # in case there is no variables in the body
-        if len(list(set(dtypes))) == 0:
-            return []
-        if self._invalid_var_dtypes(var_dtype_list):
-            return []
-        # check the data type consistency
-        # assert len(list(set(dtypes))) == 1, "Invalid existentially quantified variables. " + \
-        #    str(len(list(set(dtypes)))) + " data types in the body."
-        n_vars = len(vars)
-        # TODO: fetch consts for each variable by data type, cartesian product
-        # TODO: func terms should be obtained
-        ## consts_list = [self.lang.get_by_dtype(t) for t in dtypes]
-        consts_list = []
-        for i in range(len(dtypes)):
-            consts_list.append(
-                self.get_terms_by_dtype_and_depth(dtypes[i], depths[i]))
-
-        subs_consts_list = []
-        for consts in list(itertools.product(*consts_list)):
-            # for consts in list(itertools.permutations(consts_list[0], 9)):
-            if self.dataset_type in ['kandinsky', 'clevr-hans']:
-                if len(list(set(consts))) == len(consts):
-                    subs_consts_list.append(consts)
-            else:
-                subs_consts_list.append(consts)
-
-        # TODO: Compute max depth of the variable in the atom
-
-        # print(consts_list)
-        # e.g. if the data type is shape, then subs_consts_list = [(red,), (yellow,), (blue,)]
-        # subs_consts_list = itertools.permutations(consts, n_vars)
-
-        theta_list = []
-        # generate substitutions by combining variables to the head of subs_consts_list
-        for subs_consts in tqdm(subs_consts_list):
-            theta = []
-            for i, const in enumerate(subs_consts):
-                s = (vars[i], const)
-                theta.append(s)
-            # if theta not in theta_list:
-            theta_list.append(theta)
-        # e.g. theta_list: [[(Z, red)], [(Z, yellow)], [(Z, blue)]]
-        return theta_list
+        return all_ground_clauses, all_clause_indices
+    
+    def _ground_clause(self, clause):
+        # print('Grounding Clause: ', clause)
+        # TODO: Do we need head unification????
+        if len(clause.all_vars()) == 0:
+            print("Grounding completed with {} substitutions!: {}".format(0, str(clause)))
+            return [clause]
+        else:
+            theta_list = generate_substitutions([clause.head] + clause.body, self.terms, self.max_term_depth)
+            assert len(theta_list) < 1000000, "Too many substitutions for:{}.".format(str(clause))
+            # print("{} substitutions to ground!".format(len(theta_list)))
+            ground_clauses = []
+            for i, theta in enumerate(theta_list):
+                ground_head = subs_list(clause.head, theta)
+                if ground_head in self.fact_index_dict:
+                    ground_body = [subs_list(bi, theta)
+                                     for bi in clause.body]
+                    ground_clauses.append(
+                        Clause(ground_head, ground_body))
+            print("Grounding completed with {} substitutions!: {}".format(len(theta_list), str(clause)))
+            return ground_clauses
 
     def _build_rg(self):
         """
@@ -227,6 +142,7 @@ class ReasoningGraphModule(object):
         G.add_edge(len(self.facts)+len(self.grounded_clauses),
                    0, etype=1, color='r', clause_index=0)
 
+        print("Adding edges to the graph...")
         for i, gc in enumerate(tqdm(self.grounded_clauses)):
             head_flag, head_fact_idx = self._get_fact_idx(gc.head)
             body_fact_idxs = []
@@ -291,6 +207,7 @@ class ReasoningGraphModule(object):
         return edge_index, edge_clause_index, edge_type, num_nodes
 
     def _init_rg(self):
+        print("Initializing reasoning graph...")
         G = nx.DiGraph()
         node_labels = {}
         node_objects = {}

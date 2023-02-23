@@ -1,41 +1,27 @@
 append(*,X,X):-.
-append(*,X,Y):-.
+# append(*,X,Y):-.
 append(X,*,X):-.
-append(X,*,Y):-.
-append(X,X,Y):-.
-append(X,Y,X):-.
-append(X,Y,Y):-.
-append(X,Y,Z):-.
+# append(X,*,Y):-.
+# append(X,X,Y):-.
+# append(X,Y,X):-.
+# append(X,Y,Y):-.
+# append(X,Y,Z):-.
 append(X,Y,Z):-append(Y,X,Z).
 append(X,Y,Z):-append(Y,Z,X).
-append(X,Y,f(Z,V)):-.
-append(X,Y,f(Z,V)):-append(X,V,Y).
-append(X,Y,f(Z,V)):-append(Y,V,X).
-append(X,Y,f(Z,Y)):-.
-append(X,f(Y,Z),V):-.
-append(X,f(Y,Z),f(V,W)):-.
-append(X,f(Y,Z),f(V,W)):-append(X,W,Z).
-append(X,f(Y,Z),f(V,W)):-append(X,Z,W).
-append(X,f(Y,Z),f(V,W)):-append(Z,X,W).
-append(X,f(Y,Z),f(V,Z)):-append(X,Z,Z).
-append(X,f(Y,Z),f(Y,V)):-.
-append(X,f(Y,Z),f(Y,V)):-append(X,V,Z).
-append(X,f(Y,Z),f(Y,V)):-append(X,Z,V).
-append(X,f(Y,Z),f(Y,Z)):-.
-append(f(X,Y),Z,V):-.
-append(f(X,Y),Z,f(V,W)):-.
-append(f(X,Y),Z,f(V,W)):-append(Y,Z,W).
-append(f(X,Y),Z,f(V,W)):-append(Z,Y,W).
-append(f(X,Y),Z,f(V,Z)):-.
-append(f(X,Y),Z,f(X,V)):-.
-append(f(X,Y),Z,f(X,V)):-append(V,Z,Y).
 append(f(X,Y),Z,f(X,V)):-append(Y,Z,V).
-append(f(X,Y),Z,f(X,V)):-append(Z,Y,V).
-append(f(X,Y),Z,f(X,Y)):-.
-append(f(X,Y),Z,f(X,Z)):-.
-append(f(X,Y),f(X,Z),V):-.
-append(f(X,Y),f(X,Z),f(V,W)):-.
-append(f(X,Y),f(Z,V),W):-.
-append(f(X,Y),f(Z,V),f(W,A)):-.
-append(f(X,Y),f(Z,V),f(X,W)):-.
-append(f(X,Y),f(Z,V),f(Z,W)):-.
+# append(X,Y,f(Z,V)):-.
+# append(X,Y,f(Z,V)):-append(X,V,Y).
+# append(X,Y,f(Z,V)):-append(Y,V,X).
+# append(X,Y,f(Z,Y)):-.
+# append(X,f(Y,Z),V):-.
+# append(X,f(Y,Z),f(V,Z)):-append(X,Z,Z).
+# append(X,f(Y,Z),f(Y,V)):-.
+# append(X,f(Y,Z),f(Y,V)):-append(X,V,Z).
+# append(X,f(Y,Z),f(Y,V)):-append(X,Z,V).
+# append(X,f(Y,Z),f(Y,Z)):-.
+# append(f(X,Y),Z,V):-.
+# append(f(X,Y),Z,f(V,Z)):-.
+# append(f(X,Y),Z,f(X,V)):-.
+# append(f(X,Y),Z,f(X,V)):-append(V,Z,Y).
+# append(f(X,Y),Z,f(X,V)):-append(Y,Z,V).
+# append(f(X,Y),Z,f(X,V)):-append(Z,Y,V).

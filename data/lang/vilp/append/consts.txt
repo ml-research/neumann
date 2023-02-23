@@ -4,6 +4,6 @@ object_img3:obj5,obj6,obj7
 objects_img1:****
 objects_img2:**
 objects_img3:***
-color:red,gray,cyan,yellow
+color:cyan,gray,red,yellow
 colors:*
 image:img1,img2,img3

@@ -1,5 +1,5 @@
-import torch
 import numpy as np
+import torch
 
 
 def logsumexp(inputs, dim=None, keepdim=False):
@@ -37,7 +37,7 @@ def weight_sum(W_l, H):
     return WH_sum
 
 
-def softor(xs, dim=0, gamma=0.001):
+def softor(xs, dim=0, gamma=0.015):
     """The softor function.
 
     Args:
@@ -51,6 +51,7 @@ def softor(xs, dim=0, gamma=0.001):
     if not torch.is_tensor(xs):
         xs = torch.stack(xs, dim)
     log_sum_exp = gamma*logsumexp(xs * (1/gamma), dim=dim)
+    # log_sum_exp = gamma * torch.log(torch.sum(torch.exp(xs/gamma),dim=dim))
     if log_sum_exp.max() > 1.0:
         return log_sum_exp / log_sum_exp.max()
     else:

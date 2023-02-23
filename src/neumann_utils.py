@@ -21,14 +21,14 @@ from valuation import (SlotAttentionValuationModule,
                        YOLOValuationModule)
 
 
-def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, device, dataset, dataset_type):
+def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type):
     if os.path.exists('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)):
         with open('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset), 'rb') as f:
             RGM = pickle.load(f)
         print("Reasoning Graph loaded!")
     else:
         RGM = ReasoningGraphModule(clauses=clauses+bk_clauses, facts=atoms,
-                                   terms=terms, lang=lang, device=device, dataset_type=dataset_type)
+                                   terms=terms, lang=lang, max_term_depth=term_depth, device=device, dataset_type=dataset_type)
         print("Saving the reasoning graph...")
         save_folder = 'model/reasoning_graph/'
         save_path = 'model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)
@@ -39,8 +39,21 @@ def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, device, datase
     return RGM
 
 
-def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device, dataset, dataset_type, num_objects, infer_step=10, train=False):
-    if dataset_type in ['vilp', 'clevr-hans']:
+
+
+def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device, dataset, dataset_type, num_objects, term_depth=6, infer_step=10, train=False):
+    if dataset_type in ['synthetic']:
+        RGM = load_reasoning_graph(
+            clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type)
+        # node feature module
+        # build Reasoning GNN
+        soft_logic = SoftLogic()
+        # (in_channels=args.node_dim, out_channels=len(atoms)
+        MPM = MessagePassingModule(soft_logic, device, T=infer_step)
+        NEUM = NEUMANN(atoms=atoms, clauses=clauses, message_passing_module=MPM, reasoning_graph_module=RGM,
+                   bk=bk, bk_clauses=bk_clauses, device=device, program_size=program_size, train=train)
+        return NEUM
+    elif dataset_type in ['vilp', 'clevr-hans']:
         print("Loading SlotAttention Perception Module...")
         PM = SlotAttentionPerceptionModule(
             e=num_objects, d=19, device=device).to(device)
@@ -69,7 +82,7 @@ def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device,
     # build reasoning graph
     # RGM = ReasoningGraphModule(clauses=clauses+bk_clauses, facts=atoms, terms=terms, lang=lang, device=device)
     RGM = load_reasoning_graph(
-        clauses, bk_clauses, atoms, terms, lang, device, dataset, dataset_type)
+        clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type)
     # node feature module
     # build Reasoning GNN
     soft_logic = SoftLogic()

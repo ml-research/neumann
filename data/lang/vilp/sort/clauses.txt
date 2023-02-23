@@ -1,0 +1,2 @@
+sort(X,Y):-perm(X,Y),is_sorted(Y).
+sort(X,Y):-perm(X,Y).

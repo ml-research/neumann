@@ -1,8 +1,5 @@
-from abc import ABC, abstractmethod
-
 import itertools
-
-
+from abc import ABC, abstractmethod
 
 
 def flatten(x): return [z for y in x for z in (
@@ -54,7 +51,6 @@ class Term(ABC):
     @abstractmethod
     def all_funcs(self):
         pass
-
     @abstractmethod
     def max_depth(self):
         pass
@@ -480,6 +476,7 @@ class Atom():
         if other == None:
             return False
         if self.pred == other.pred:
+            # return str(self) == str(other)
             for i in range(len(self.terms)):
                 if not self.terms[i] == other.terms[i]:
                     return False

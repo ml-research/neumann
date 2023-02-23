@@ -1,7 +1,8 @@
 import itertools
+
 import torch
 
-from fol.logic_ops import unify, subs_list, subs
+from fol.logic_ops import subs, subs_list, unify
 
 
 class TensorEncoder(object):
@@ -31,6 +32,7 @@ class TensorEncoder(object):
         self.lang = lang
         self.facts = facts
         self.clauses = clauses
+        print(clauses)
         self.device = device
         self.rgm = rgm
         self.G = len(facts)

@@ -297,27 +297,3 @@ class NEUMANN(nn.Module):
         for atom in atoms:
             text += str(atom) + ', '
         return text
-
-    def plot_reasoning_graph(self, name):
-        import matplotlib.pyplot as plt
-        import networkx as nx
-        from matplotlib.backends.backend_pdf import PdfPages
-        pp = PdfPages('imgs/{}.pdf'.format(name))
-
-        G = self.rgm.networkx_graph
-        fig = plt.figure(1, figsize=(60, 60))
-
-        first_partition_nodes = list(range(len(self.atoms)))
-        edges = G.edges()
-        colors = [G[u][v]['color'] for u, v in edges]
-        #weights = [G[u][v]['weight'] for u,v in edges]
-
-        nx.draw_networkx(
-            G,
-            labels=self.rgm.node_labels, node_size=2, node_color='lightgray', edge_color=colors, font_size=24,
-            pos=nx.drawing.layout.bipartite_layout(G, first_partition_nodes))  # Or whatever other display options you like
-        plt.tight_layout()
-
-        plt.show()
-        pp.savefig(fig)
-        pp.close()

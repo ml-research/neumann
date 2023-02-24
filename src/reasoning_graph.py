@@ -30,6 +30,7 @@ class ReasoningGraphModule(object):
         self.lang = lang
         self.clauses = clauses
         self.facts = facts
+        self.fact_set = set(facts)
         self.terms = terms
         self.device = device
         self.max_term_depth = max_term_depth
@@ -93,7 +94,7 @@ class ReasoningGraphModule(object):
             lang (Language): A language.
         """
 
-        ground_clauses_list = Parallel(n_jobs=-1)([delayed(self._ground_clause)(clause) for clause in clauses])
+        ground_clauses_list = Parallel(n_jobs=20)([delayed(self._ground_clause)(clause) for clause in clauses])
 
         all_ground_clauses = []
         all_clause_indices = []
@@ -122,6 +123,8 @@ class ReasoningGraphModule(object):
                                      for bi in clause.body]
                     ground_clauses.append(
                         Clause(ground_head, ground_body))
+
+            ground_clauses = self._remove_redundunt_ground_clauses(ground_clauses)
             print("Grounding completed with {} substitutions!: {}".format(len(theta_list), str(clause)))
             return ground_clauses
 
@@ -164,8 +167,22 @@ class ReasoningGraphModule(object):
                                color='b', clause_index=self.clause_indices[i])
         return G, node_labels, node_objects
 
-    def _to_edge_index(self, clauses):
+    def _remove_redundunt_ground_clauses(self, ground_clauses):
+        """Rmove A:-B_1,...,B_n if A or B_i is not in the fact list, this is redundant ground clause not effective to the reasoning result.
         """
+        pruned_ground_clauses = []
+        for gc in ground_clauses:
+            if gc.head in self.fact_set:
+                body_flag = True
+                for bi in gc.body:
+                    if not bi in self.fact_set:
+                        body_flag = False
+                if body_flag:
+                    pruned_ground_clauses.append(gc)
+        return pruned_ground_clauses
+
+    def _to_edge_index(self, clauses):
+        """NOT USED IN THIS VERSION.
         Convert clauses into a edge index representing a reasoning graph.
 
         Args:

@@ -1,7 +1,7 @@
 import argparse
 import pickle
 import time
-
+import os
 import numpy as np
 import torch
 from rtpt import RTPT
@@ -14,7 +14,7 @@ from neumann_utils import (generate_captions, get_data_loader, get_model,
                            get_prob, save_images_with_captions,
                            to_plot_images_clevr, to_plot_images_kandinsky)
 from tensor_encoder import TensorEncoder
-
+from visualize import plot_reasoning_graph
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -41,6 +41,8 @@ def get_args():
     parser.add_argument('--gamma', default=0.01, type=float,
                         help='Smooth parameter in the softor function')
     parser.add_argument("--plot", action="store_true",
+                        help="Plot images with captions.")
+    parser.add_argument("--plot-graph", action="store_true",
                         help="Plot images with captions.")
     parser.add_argument("--t-beam", type=int, default=4,
                         help="Number of rule expantion of clause generation.")
@@ -243,6 +245,13 @@ def main(n):
     print("NUM EDGES: ", num_edges)
     print("MEMORY TOTAL: ", num_nodes + num_edges)
     # save the reasoning graph
+
+    if args.plot_graph:
+        print("Plotting reasoning graph...")
+        base_path = 'plot/reasoning_graph/'
+        os.makedirs(base_path, exist_ok=True)
+        path = base_path + "{}_{}_rg.png".format(args.dataset_type, args.dataset)
+        plot_reasoning_graph(path, NEUMANN.rgm)
 
     # CHECK memory of tensors
     """Check memoru of tensors.

@@ -1,7 +1,7 @@
 import itertools
 from fol.logic import Atom, Clause, FuncTerm, Var
 from fol.logic_ops import subs
-
+from fol.language import DataType
 
 # TODOL refine_from_modeb, generate_by_refinement
 class RefinementGenerator(object):
@@ -20,6 +20,7 @@ class RefinementGenerator(object):
         self.lang = lang
         self.mode_declarations = mode_declarations
         self.vi = 0 # counter for new variable generation
+        self.max_depth = 2
 
 
     def _init_recall_counter_dic(self, mode_declarations):
@@ -129,10 +130,10 @@ class RefinementGenerator(object):
     def refinement_clause(self, clause):
         C_refined = []
         for modeb in self.mode_declarations:
-            new_clauses = self.refine_from_modeb(clause, modeb)
-            #new_clauses = [c for c in new_clauses if self._is_valid(c)]
-            C_refined.extend(new_clauses)
-            ##print(C_refined)
+            C_refined.extend(self.refine_from_modeb(clause, modeb))
+        C_refined.extend(self.apply_func(clause))
+        C_refined.extend(self.subs_const(clause))
+        C_refined.extend(self.subs_var(clause))
         return list(set(C_refined))
 
 
@@ -152,137 +153,17 @@ class RefinementGenerator(object):
                     result.append(c)
         return result
 
-    def __refinement_clauses(self, C):
-        """
-        apply refinement operations to each element in given set of clauses
-        Inputs
-        ------
-        C : List[.logic.Clause]
-            set of clauses
-        Returns
-        -------
-        C_refined : List[.logic.Clause]
-            refined clauses
-        """
-        C_refined = []
-        for clause in C:
-            C_refined.extend(self.refinement(clause))
-        return list(set(C_refined))
-
-    def ___refinement(self, clause):
-        """
-        refinement operator that consist of 4 types of refinement
-        Inputs
-        ______
-        clause : .logic.Clause
-            input clause to be refined
-        Returns
-        -------
-        refined_clauses : List[.logic.Clause]
-            refined clauses
-        """
-        # refs = list(set(self.add_atom(clause) + self.apply_func(clause) +
-        #                self.subs_var(clause) + self.subs_const(clause)))
-        # refs = list(set(self.add_atom(clause)))
-        refs = list(set(self.add_attribute_atom(clause) + self.add_relation_atom(clause)))
-        result = []
-        for ref in refs:
-            if not '' in [str(arg) for arg in ref.head.terms]:
-                result.append(ref)
-        return result
-
-    def add_atom(self, clause):
-        """
-        add p(x_1, ..., x_n) to the body
-        """
-        # Check body length
-        if (len(clause.body) >= self.max_body_len) or (len(clause.all_consts()) >= 1):
-            return []
-
-        refined_clauses = []
-        for p in self.lang.preds:
-            var_candidates = clause.all_vars()
-            # Select X_1, ..., X_n for new atom p(X_1, ..., X_n)
-            # 1. Selection 2. Ordering
-            for vs in itertools.permutations(var_candidates, p.arity):
-                new_atom = Atom(p, vs)
-                head = clause.head
-                if new_atom != head and not (new_atom in clause.body):
-                    new_body = clause.body + [new_atom]
-                    new_clause = Clause(head, new_body)
-                    refined_clauses.append(new_clause)
-        return refined_clauses
-
-    def add_attribute_atom(self, clause):
-        refined_clauses = []
-        for p in self.mode_declarations.get_attribute_preds:
-            var_candidates = clause.all_vars()
-            # Select X_1, ..., X_n for new atom p(X_1, ..., X_n)
-            # 1. Selection 2. Ordering
-            assert len(p.dtypes) == 2, "Invalid arity in refinement for attribute atoms, arity: " + str(len(p.dtypes))
-            attr_dtype = p.dtypes[-1]
-            for v in var_candidates:
-                consts = self.lang.get_by_dtype(attr_dtype)
-                for c in consts:
-                    # add attribute atom to body
-                    new_atom = Atom(p, [v, c])
-                    new_body = clause.body + [new_atom]
-                    new_clause = Clause(clause.head, new_body)
-                    refined_clauses.append(new_clause)
-        return refined_clauses
-
-    def add_relation_atom(self, clause):
-        refined_clauses = []
-        for p in self.mode_manager.get_relational_preds():
-            var_candidates = clause.all_vars()
-            # Select X_1, ..., X_n for new atom p(X_1, ..., X_n)
-            # 1. Selection 2. Ordering
-            for vs in itertools.permutations(var_candidates, p.arity):
-                new_atom = Atom(p, vs)
-                head = clause.head
-                if new_atom != head and not (new_atom in clause.body):
-                    new_body = clause.body + [new_atom]
-                    new_clause = Clause(head, new_body)
-                    refined_clauses.append(new_clause)
-        return refined_clauses
-
-    def _add_atom(self, clause):
-        """
-        add p(x_1, ..., x_n) to the body
-        """
-        # Check body length
-        if (len(clause.body) >= self.max_body_len) or (len(clause.all_consts()) >= 1):
-            return []
-
-        refined_clauses = []
-        for p in self.lang.preds:
-            var_candidates = clause.all_vars()
-            # Select X_1, ..., X_n for new atom p(X_1, ..., X_n)
-            # 1. Selection 2. Ordering
-            for vs in itertools.permutations(var_candidates, p.arity):
-                new_atom = Atom(p, vs)
-                head = clause.head
-                if new_atom != head and not (new_atom in clause.body):
-                    new_body = clause.body + [new_atom]
-                    new_clause = Clause(head, new_body)
-                    refined_clauses.append(new_clause)
-        return refined_clauses
-
     def apply_func(self, clause):
         """
         z/f(x_1, ..., x_n) for every variable in C and every n-ary function symbol f in the language
         """
         refined_clauses = []
-        if (len(clause.body) >= self.max_body_len) or (len(clause.all_consts()) >= 1):
-            return []
+        #if (len(clause.body) >= self.max_body_len) or (len(clause.all_consts()) >= 1):
+        #    return []
 
-        funcs = clause.all_funcs()
         for z in clause.head.all_vars():
             # for z in clause.all_vars():
             for f in self.lang.funcs:
-                # if len(funcs) >= 1 and not(f in funcs):
-                #    continue
-
                 new_vars = [self.lang.var_gen.generate()
                             for v in range(f.arity)]
                 func_term = FuncTerm(f, new_vars)
@@ -315,8 +196,8 @@ class RefinementGenerator(object):
             return []
 
         refined_clauses = []
-        all_vars = clause.head.all_vars()
-        consts = self.lang.subs_consts
+        all_vars = clause.head.all_vars_by_dtype(DataType('colors'))
+        consts = self.lang.get_by_dtype_name('colors')
         for v, c in itertools.product(all_vars, consts):
             result = subs(clause, v, c)
             result.rename_vars()

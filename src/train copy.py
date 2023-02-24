@@ -15,7 +15,6 @@ from neumann_utils import (generate_captions, get_data_loader, get_model,
                            to_plot_images_clevr, to_plot_images_kandinsky)
 from tensor_encoder import TensorEncoder
 from visualize import plot_reasoning_graph
-import torch.nn.functional as F
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -136,7 +135,6 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
     for epoch in range(args.epochs):
         loss_i = 0
         start_time = time.time()
-        grad_sum = torch.zeros(args.program_size, (len(NEUMANN.clauses)), device=device)
         for i, sample in tqdm(enumerate(train_loader, start=0)):
             # to cuda
             imgs, target_set = map(lambda x: x.to(device), sample)
@@ -152,31 +150,13 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
             loss_i += loss.item()
             # compute the gradients
             loss.backward()
-            #print(np.round(NEUMANN.clause_weights.grad.T.detach().cpu().numpy(), 2))
-            #print(NEUMANN.clause_weights.grad.detach().shape)
-            #print(NEUMANN.clause_weights.grad.detach().sum(dim=0).shape)
-            grad_sum += NEUMANN.clause_weights.grad.detach()
-            #print(grad_sum)
+            print(np.round(NEUMANN.clause_weights.grad.T.detach().cpu().numpy(), 2))
             # update the weights of clauses
             optimizer.step()
 
             writer.add_scalar("metric/train_loss", loss, global_step=iteration)
             iteration += 1
 
-        clause_scores_grad, indices = grad_sum.min(dim=0)
-        clause_scores = clause_scores_grad * (-1) / len(train_loader)
-        selected_clause_indices = torch.stack([F.gumbel_softmax(clause_scores, tau=0.1, hard=True) for i in range(10)])
-        selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
-
-        selected_clauses = []
-        for ci in selected_clause_indices.detach().cpu().numpy():
-            if ci > 0:
-                selected_clauses.append(NEUMANN.clauses[int(ci)])
-        print("SELECTED CLAUSES: ", list(set(selected_clauses)))
-
-        print(selected_clause_indices)
-
-        print("clause scores: ", clause_scores)
         # record time
         epoch_time = time.time() - start_time
         time_list.append(epoch_time)

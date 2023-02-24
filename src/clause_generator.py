@@ -153,7 +153,7 @@ class ClauseGenerator(object):
                 refs_i = list(set(refs_i).difference(set(B_)))
                 B_.extend(refs_i)
                 refs.extend(refs_i)
-                if self._is_valid(c) and not self._is_confounded(c):
+                if self._is_valid(c):
                     C = C.union(set([c]))
                     print("Added: ", c)
 

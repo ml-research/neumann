@@ -1,8 +1,5 @@
 # member function for lists
 member(X,Y):-.
-member(X,Y):-member(Y,X).
 member(X,f(X,Y)):-.
-member(X,f(Y,Z)):-.
 member(X,f(Y,Z)):-member(X,Z).
 member(X,f(Y,Z)):-member(Y,Z).
-member(f(X,Y),Z):-.

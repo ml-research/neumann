@@ -1,5 +1,4 @@
 import argparse
-import math
 import os
 import pickle
 import time
@@ -11,14 +10,12 @@ from sklearn.metrics import accuracy_score, recall_score, roc_curve
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-import wandb
-from clause_generator import ClauseGenerator
 from logic_utils import get_lang
 from mode_declaration import get_mode_declarations_vilp
 from neumann_utils import (generate_captions, get_data_loader, get_model,
                            get_prob, save_images_with_captions,
                            to_plot_images_clevr, to_plot_images_kandinsky,
-                           update_by_clauses, update_by_refinement)
+                           update_by_refinement)
 from refinement import RefinementGenerator
 from tensor_encoder import TensorEncoder
 from visualize import plot_reasoning_graph
@@ -77,10 +74,6 @@ def get_args():
                         help="The len of body of clauses to be generated.")
     parser.add_argument("--trial", type=int, default=2,
                         help="The number of trials to generate clauses before the final training.")
-    parser.add_argument("--th-depth", type=int, default=2,
-                        help="The depth to specify the clauses to be pruned after generation.")
-    parser.add_argument("--n-sample", type=int, default=5,
-                        help="The number of samples on each step of clause generation..")
     args = parser.parse_args()
     return args
 
@@ -144,7 +137,7 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
         return accuracy, rec_score, th
 
 
-def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_loader, device, writer, rtpt, epochs, trial):
+def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_loader, device, writer, rtpt, epochs):
     bce = torch.nn.BCELoss()
     time_list = []
     iteration = 0
@@ -154,7 +147,6 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
         start_time = time.time()
         grad_sum = torch.zeros(args.program_size, (len(NEUMANN.clauses)), device=device)
         for i, sample in tqdm(enumerate(train_loader, start=0)):
-            optimizer.zero_grad()
             # to cuda
             imgs, target_set = map(lambda x: x.to(device), sample)
             target_set = target_set.float()
@@ -178,7 +170,6 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
             optimizer.step()
 
             writer.add_scalar("metric/train_loss", loss, global_step=iteration)
-            wandb.log({'metric/training_loss_trial_{}'.format(trial): loss.item()})
             iteration += 1
 
         clause_scores_grad, indices = grad_sum.min(dim=0)
@@ -203,7 +194,6 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
         writer.add_scalar("metric/epoch_time_mean", np.mean(time_list))
         writer.add_scalar("metric/epoch_time_std", np.std(time_list))
         writer.add_scalar("metric/train_loss_epoch", loss_i, global_step=epoch)
-        wandb.log({'metric/training_loss_epoch': loss_i})
 
         rtpt.step()#subtitle=f"loss={loss_i:2.2f}")
         print("loss: ", loss_i)
@@ -212,8 +202,7 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
         #    NEUMANN.print_valuation_batch(V_T)
         #    print("Epoch {}: ".format(epoch))
         #    NEUMANN.print_program()
-        if epoch > 0 and epoch % 10 == 0:
-            NEUMANN.print_program()
+        if epoch % 5 == 0:
             print("Predicting on validation data set...")
             acc_val, rec_val, th_val = predict(
                 NEUMANN, I2F, val_loader, args, device, th=0.7, split='val')
@@ -236,7 +225,6 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
             writer.add_scalar("metric/test_acc", acc, global_step=epoch)
             print("acc_test: ", acc)
         """
-    NEUMANN.print_program()
     return loss, NEUMANN.clause_weights.detach() #clause_scores / epochs
 
 
@@ -254,8 +242,6 @@ def main(n):
     print('device: ', device)
     name = 'rgnn/' + args.dataset + '/' + str(n)
     writer = SummaryWriter(f"runs/{name}", purge_step=0)
-    wandb.init(project="NEUMANN", name="{}:seed_{}".format(args.dataset, n))
-
 
     # Create RTPT object
     rtpt = RTPT(name_initials='HS', experiment_name="NEUMANN_{}".format(args.dataset),
@@ -277,7 +263,6 @@ def main(n):
                              num_objects=args.num_objects, infer_step=args.infer_step, train=not(args.no_train))
     # clause generator
     refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations_vilp(lang, args.dataset))
-    clause_generator = ClauseGenerator(refinement_generator=refinement_generator, root_clause=clauses[0], th_depth=args.th_depth, n_sample=args.n_sample)
     writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
     writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))
     num_nodes = len(NEUMANN.rgm.atom_node_idxs) + \
@@ -312,77 +297,63 @@ def main(n):
     params = list(NEUMANN.parameters())
     optimizer = torch.optim.RMSprop(params, lr=args.lr)
     clause_scores = torch.ones((args.program_size, len(NEUMANN.clauses, ))).to(device)
+    while not stop_flag:
 
-    #too_simple_clauses = clauses
-    while trial < args.trial:
-        print("=====TRIAL: {}====".format(trial))
-
-        epochs = 5
-        pos_ratio = 1.0
-        neg_ratio =  min(0.2*(trial+1), 1.0)
-        softmax_temp = 1.0
-        lr = 1e-2
-        """
-        else:
-            epochs = 50
+        if trial < args.trial and len(NEUMANN.clauses) < 100:
+            epochs = 3
             pos_ratio = 1.0
+            neg_ratio = min(0.1*(trial+1), 1.0)
+            softmax_temp = 1.0
+            lr = 1e-2
+        else:
+            epochs = 100
+            pos_ratio = 0.5
             neg_ratio = 1.0
             softmax_temp = 1e-2
-            lr =  1e-2 * pow(0.1, min(trial, 3))
-            # pruned_clauses = [c for c in NEUMANN.clauses if not c in too_simple_clauses]
-        """
-        print('lr={}'.format(lr))
+            lr = 1e-2
 
-        #import inspect
-        #print(inspect.getmembers(NEUMANN))
-        print(NEUMANN.clauses)
-        # Get torch data loader
-        train_loader, val_loader,  test_loader = get_data_loader(args, device, pos_ratio, neg_ratio)
-        NEUMANN, new_gen_clauses = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp)
-        clause_generator.print_tree()
-        params = list(NEUMANN.parameters())
-        optimizer = torch.optim.RMSprop(params, lr=lr)
-        # optimizer = torch.optim.SGD(params, lr=lr)
-        optimizer.zero_grad()
-        loss_list, clause_scores = train_neumann(args, NEUMANN, I2F, optimizer, train_loader,
-                                  val_loader, test_loader, device, writer, rtpt, epochs=epochs, trial=trial)
+        #optimizer.zero_grad()
+
+        if trial < args.trial and len(NEUMANN.clauses) < 200:
+            #import inspect
+            #print(inspect.getmembers(NEUMANN))
+            print(NEUMANN.clauses)
+            # Get torch data loader
+            train_loader, val_loader,  test_loader = get_data_loader(args, device, pos_ratio, neg_ratio)
+            NEUMANN = update_by_refinement(NEUMANN, clause_scores, refinement_generator, softmax_temp=softmax_temp)
+            params = list(NEUMANN.parameters())
+            optimizer = torch.optim.RMSprop(params, lr=lr)
+            loss_list, clause_scores = train_neumann(args, NEUMANN, I2F, optimizer, train_loader,
+                                      val_loader, test_loader, device, writer, rtpt, epochs=epochs)
+            #NEUMANN.print_program()
+        else:
+            # Get torch data loader
+            train_loader, val_loader,  test_loader = get_data_loader(args, device, pos_ratio, neg_ratio)
+            # NEUMANN = update_by_refinement(NEUMANN, clause_scores, refinement_generator, softmax_temp=softmax_temp)
+            #NEUMANN.init_random_weights(args.program_size, NEUMANN.clauses, device)
+            params = list(NEUMANN.parameters())
+            optimizer = torch.optim.RMSprop(params, lr=lr)
+
+            loss_list, clause_scores = train_neumann(args, NEUMANN, I2F, optimizer, train_loader,
+                                  val_loader, test_loader, device, writer, rtpt, epochs=epochs)
+            NEUMANN.print_program()
+        # validation split
+        print("Predicting on validation data set...")
+        acc_val, rec_val, th_val = predict(
+            NEUMANN, I2F, val_loader, args, device, th=0.5, split='val')
+        print("Trial {}, acc_val: {}".format(trial, acc_val))
         trial += 1
-        #NEUMANN.print_program()
-        
-    epochs = 50
-    pos_ratio = 0.1
-    neg_ratio = 1.0
-    softmax_temp = 1e-2
-    lr =  1e-2#  * pow(0.1, min(trial, 3))
-    print("==== Generated Refinement Tree ====")
-    clause_generator.print_tree()
-    generated_clauses = clause_generator.get_clauses_by_th_depth(args.th_depth)
-    print("==== Extracted Clauses ====")
-    for c in generated_clauses:
-        print(c)
-    NEUMANN = update_by_clauses(NEUMANN, generated_clauses)
-    # Get torch data loader
-    train_loader, val_loader,  test_loader = get_data_loader(args, device, pos_ratio, neg_ratio)
-    # NEUMANN = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp)
-    #NEUMANN.init_random_weights(args.program_size, NEUMANN.clauses, device)
-    params = list(NEUMANN.parameters())
-    optimizer = torch.optim.RMSprop(params, lr=lr)
-    # optimizer = torch.optim.SGD(params, lr=lr)
-    optimizer.zero_grad()
-    loss_list, clause_scores = train_neumann(args, NEUMANN, I2F, optimizer, train_loader,
-                          val_loader, test_loader, device, writer, rtpt, epochs=epochs, trial=trial)
-    NEUMANN.print_program()
-    # validation split
-    print("Predicting on validation data set...")
-    acc_val, rec_val, th_val = predict(
-        NEUMANN, I2F, val_loader, args, device, th=0.5, split='val')
-    print("Trial {}, acc_val: {}".format(trial, acc_val))
-    if args.plot_graph:
-        print("Plotting reasoning graph...")
-        base_path = 'plot/reasoning_graph/'
-        os.makedirs(base_path, exist_ok=True)
-        path = base_path + "rg_{}_{}_trial_{}.png".format(args.dataset_type, args.dataset, trial)
-        plot_reasoning_graph(path, NEUMANN.rgm)
+        if acc_val > 0.95:
+            stop_flag = True
+
+
+        if args.plot_graph:
+            print("Plotting reasoning graph...")
+            base_path = 'plot/reasoning_graph/'
+            os.makedirs(base_path, exist_ok=True)
+            path = base_path + "rg_{}_{}_trial_{}.png".format(args.dataset_type, args.dataset, trial)
+            plot_reasoning_graph(path, NEUMANN.rgm)
+
     print("Predicting on training data set...")
     # training split
     acc, rec, th = predict(

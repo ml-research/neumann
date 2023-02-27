@@ -1,7 +1,11 @@
 import itertools
-from fol.logic import Atom, Clause, FuncTerm, Var
-from fol.logic_ops import subs
+
 from fol.language import DataType
+from fol.logic import Atom, Clause, Const, FuncTerm, Var
+from fol.logic_ops import subs
+from logic_utils import (get_all_vars_with_dtype, invalid_var_dtypes,
+                         is_tautology, true)
+
 
 # TODOL refine_from_modeb, generate_by_refinement
 class RefinementGenerator(object):
@@ -20,7 +24,9 @@ class RefinementGenerator(object):
         self.lang = lang
         self.mode_declarations = mode_declarations
         self.vi = 0 # counter for new variable generation
-        self.max_depth = 2
+        self.max_depth = 1
+        self.max_body_len=1
+        self.max_var_num = 5
 
 
     def _init_recall_counter_dic(self, mode_declarations):
@@ -38,6 +44,16 @@ class RefinementGenerator(object):
 
     def _increment_recall(self, mode_declaration):
         self.recall_counter_dic[str(mode_declaration)] += 1
+
+    def _remove_invalid_clauses(self, clauses):
+        """Fiter and obtain valid clauses."""
+        result = []
+        for clause in clauses:
+            var_dtypes = get_all_vars_with_dtype([clause.head]+clause.body)
+            if not invalid_var_dtypes(var_dtypes) and not is_tautology(clause) and len(clause.all_vars()) <= self.max_var_num:
+                result.append(clause)
+        return result
+
 
 
     def get_max_obj_id(self, clause):
@@ -88,7 +104,9 @@ class RefinementGenerator(object):
                 new_atom = Atom(modeb.pred, terms)
                 if not new_atom in clause.body:
                     new_clause = Clause(clause.head, clause.body + [new_atom])
-                    C_refined.append(new_clause)
+                    # remove tautology
+                    if not (len(clause.body)==1 and clause.head == clause.body[0]):
+                        C_refined.append(new_clause)
         #self._increment_recall(modeb)
         return list(set(C_refined))
 
@@ -127,18 +145,19 @@ class RefinementGenerator(object):
         else:
             return itertools.combinations(assignments_list[0], modeb.pred.arity)
 
-    def refinement_clause(self, clause):
+    def refine_clause(self, clause):
         C_refined = []
         for modeb in self.mode_declarations:
             C_refined.extend(self.refine_from_modeb(clause, modeb))
         C_refined.extend(self.apply_func(clause))
         C_refined.extend(self.subs_const(clause))
         C_refined.extend(self.subs_var(clause))
-        return list(set(C_refined))
+        result = self._remove_invalid_clauses(list(set(C_refined)))
+        return result
 
 
 
-    def refinement(self, clauses):
+    def refine_clauses(self, clauses):
         """Perform refinement for given set of clauses.
         Args:
             clauses (list(Clauses)): A set of clauses.
@@ -147,7 +166,11 @@ class RefinementGenerator(object):
         """
         result = []
         for clause in clauses:
-            C_refined = self.refinement_clause(clause)
+            if len(clause.body) == 1 and clause.body[0].pred.name == '.':
+                clause.body = []
+            C_refined = self.refine_clause(clause)
+            # put it back to the original state
+            clause.body = [true]
             for c in C_refined:
                 if not (c in result):
                     result.append(c)
@@ -161,17 +184,18 @@ class RefinementGenerator(object):
         #if (len(clause.body) >= self.max_body_len) or (len(clause.all_consts()) >= 1):
         #    return []
 
-        for z in clause.head.all_vars():
+        for z, dtype in clause.head.all_vars_and_dtypes():
             # for z in clause.all_vars():
             for f in self.lang.funcs:
-                new_vars = [self.lang.var_gen.generate()
-                            for v in range(f.arity)]
-                func_term = FuncTerm(f, new_vars)
-                # TODO: check variable z's depth
-                result = subs(clause, z, func_term)
-                if result.max_depth() <= self.max_depth:
-                    result.rename_vars()
-                    refined_clauses.append(result)
+                if f.out_dtype == dtype:
+                    new_vars = [self.lang.var_gen.generate()
+                                for v in range(f.arity)]
+                    func_term = FuncTerm(f, new_vars)
+                    # TODO: check variable z's depth
+                    result = subs(clause, z, func_term)
+                    if result.max_depth() <= self.max_depth:
+                        result.rename_vars()
+                        refined_clauses.append(result)
         return refined_clauses
 
     def subs_var(self, clause):
@@ -197,7 +221,7 @@ class RefinementGenerator(object):
 
         refined_clauses = []
         all_vars = clause.head.all_vars_by_dtype(DataType('colors'))
-        consts = self.lang.get_by_dtype_name('colors')
+        consts = [term for term in self.lang.get_by_dtype_name('colors') if type(term) == Const]
         for v, c in itertools.product(all_vars, consts):
             result = subs(clause, v, c)
             result.rename_vars()

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.data import Batch, Data
 
-from logic_utils import get_index_by_predname, true
+from logic_utils import add_true_atoms, get_index_by_predname, true
 from torch_utils import softor
 
 
@@ -21,29 +21,38 @@ class NEUMANN(nn.Module):
         train (bool): The flag to be trained or not.
     """
 
-    def __init__(self, clauses, atoms, message_passing_module, reasoning_graph_module, program_size, device, bk=None, bk_clauses=None, train=False):
+    def __init__(self, clauses, atoms, message_passing_module, reasoning_graph_module, program_size, device, bk=None, bk_clauses=None, train=False, softmax_tmp=1.0):
         super().__init__()
         self.atoms = atoms
         self.atom_strs = [str(atom) for atom in self.atoms]
-        self.clauses = self._preprocess_clauses(clauses)
+        self.clauses = add_true_atoms(clauses)
+        print(self.clauses)
         self.bk = bk
-        self.bk_clauses = self._preprocess_clauses(bk_clauses)
+        self.bk_clauses = add_true_atoms(bk_clauses)
         self.mpm = message_passing_module
         self.rgm = reasoning_graph_module
+        self.program_size = program_size
+        self.softmax_temp = softmax_tmp
         print(self.rgm)
         self.train = train
-        self.clause_weights_bk = self.init_ones_weights(bk_clauses, device)
+        self.clause_weights_bk = self.get_ones_weights(bk_clauses, device)
         if train:
-            self.clause_weights = self.init_random_weights(
+            self.init_random_weights(
                 program_size, clauses, device)
             print(self.clause_weights)
             print(clauses)
         else:
-            self.clause_weights = self.init_ones_weights(clauses, device)
+            self.init_ones_weights(clauses, device)
         self.device = device
         self.print_program()
 
+
     def init_ones_weights(self, clauses, device):
+        """Initialize the clause weights with fixed weights. All clauses are asuumed to be correct rules.
+        """
+        self.clause_weights = torch.ones((len(clauses), ), dtype=torch.float32).to(device)
+
+    def get_ones_weights(self, clauses, device):
         """Initialize the clause weights with fixed weights. All clauses are asuumed to be correct rules.
         """
         return torch.ones((len(clauses), ), dtype=torch.float32).to(device)
@@ -52,8 +61,7 @@ class NEUMANN(nn.Module):
         """Initialize the clause weights with a random initialization.
         """
         # return nn.Parameter(torch.Tensor(np.random.normal(size=(program_size, len(clauses)))).to(device))
-        np.random.seed(0)
-        return nn.Parameter(torch.Tensor(np.random.rand(program_size, len(clauses))).to(device))
+        self.clause_weights = nn.Parameter(torch.Tensor(np.random.rand(program_size, len(clauses))).to(device))
 
     def _softmax_clauses(self, clause_weights):
         """Take softmax of clause weights to choose M clauses.
@@ -68,7 +76,7 @@ class NEUMANN(nn.Module):
             clause_weights = self.clause_weights
         else:
             clause_weights = softor(torch.softmax(
-                self.clause_weights, dim=1), dim=0)
+                self.clause_weights / self.softmax_temp, dim=1), dim=0)
 
         # concatenate bk_clauses if it exists
         if self.bk_clauses != None:
@@ -249,8 +257,8 @@ class NEUMANN(nn.Module):
             v = valuation[b].detach().cpu().numpy()
             idxs = np.argsort(-v)
             for i in idxs:
-                if v[i] > 0.5:
-                    if not self.atoms[i].pred.name in ['member', 'delete', 'not_member', 'diff_color', 'right_most'] and\
+                if v[i] > 0.2:
+                    if not self.atoms[i].pred.name in ['member', 'not_member', 'diff_color', 'right_most'] and\
                         not self.atoms[i].pred.name in ['perm', 'first_obj', 'second_obj', 'third_obj', 'append', 'sort', 'reverse'] and\
                             not self.atoms[i].pred.name in ['left_of', 'same_position', 'smaller', 'color', 'chain']:
                         print(i, self.atoms[i], ': ', round(v[i], 3))

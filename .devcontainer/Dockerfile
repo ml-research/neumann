@@ -20,3 +20,4 @@ RUN pip install networkx==3.0 lark-parser joblib scikit-learn torchsummary setup
 
 pip install pyg_lib torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-1.12.0+cu116.html
 pip install torch-geometric
+pip install wandb anytree

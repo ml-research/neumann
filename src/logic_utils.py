@@ -19,9 +19,9 @@ def get_lang(lark_path, lang_base_path, dataset_type, dataset, term_depth):
     du = DataUtils(lark_path=lark_path, lang_base_path=lang_base_path,
                    dataset_type=dataset_type, dataset=dataset)
     lang = du.load_language()
-    clauses = add_true_atom(du.load_clauses(
+    clauses = add_true_atoms(du.load_clauses(
         du.base_path + 'clauses.txt', lang))
-    bk_clauses = add_true_atom(du.load_clauses(
+    bk_clauses = add_true_atoms(du.load_clauses(
         du.base_path + 'bk_clauses.txt', lang))
     bk = du.load_atoms(du.base_path + 'bk.txt', lang)
     terms = generate_terms(lang, max_depth=term_depth)
@@ -41,9 +41,9 @@ def get_lang_behind_the_scenes(lark_path, lang_base_path, term_depth):
     du = DataUtils(lark_path=lark_path, lang_base_path=lang_base_path,
                    dataset_type='behind-the-scenes')
     lang = du.load_language()
-    clauses = add_true_atom(du.load_clauses(
+    clauses = add_true_atoms(du.load_clauses(
         du.base_path + 'clauses.txt', lang))
-    bk_clauses = add_true_atom(du.load_clauses(
+    bk_clauses = add_true_atoms(du.load_clauses(
         du.base_path + 'bk_clauses.txt', lang))
     bk = du.load_atoms(du.base_path + 'bk.txt', lang)
     print("Generating Temrs ...")
@@ -54,7 +54,7 @@ def get_lang_behind_the_scenes(lark_path, lang_base_path, term_depth):
     return lang, clauses, bk, bk_clauses, terms, atoms
 
 
-def add_true_atom(clauses):
+def _add_true_atom(clauses):
     """Add true atom T to body: p(X,Y):-. => p(X,Y):-T.
     """
     cs = []
@@ -273,3 +273,26 @@ def invalid_var_dtypes(var_dtypes):
             if var_dtypes[i][0] == var_dtypes[j][0] and var_dtypes[i][1] != var_dtypes[j][1]:
                 return True
     return False
+
+def is_tautology(clause):
+    return len(clause.body) == 1 and clause.head == clause.body[0]
+
+def add_true_atom(clause):
+    if len(clause.body) == 0:
+        return Clause(clause.head, [true])
+    else:
+        return clause
+
+def remove_true_atom(clause):
+    if len(clause.body) == 1 and clause.body[0] == true:
+        return Clause(clause.head, [])
+    else:
+        return clause
+    
+def add_true_atoms(clauses):
+    return [add_true_atom(c) for c in clauses]
+
+def remove_true_atoms(clauses):
+    return [remove_true_atom(c) for c in clauses]
+
+    

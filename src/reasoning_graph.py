@@ -23,10 +23,9 @@ class ReasoningGraphModule(object):
         device (device): A device.
         max_term_depth (int): The maximum depth (height) of the term in terms of the functors.
         init (bool): The flag whether the initialization is performed or not.
-        dataset_type (str): A dataset type.
     """
 
-    def __init__(self, clauses, facts, terms, lang, device, max_term_depth, init=True, dataset_type=None):
+    def __init__(self, clauses, facts, terms, lang, device, max_term_depth, init=True):
         self.lang = lang
         self.clauses = clauses
         self.facts = facts
@@ -34,7 +33,6 @@ class ReasoningGraphModule(object):
         self.terms = terms
         self.device = device
         self.max_term_depth = max_term_depth
-        self.dataset_type = dataset_type
         if init:
             self.fact_index_dict = self._build_fact_index_dict(facts)
             self.grounded_clauses, self.clause_indices = self._ground_clauses(
@@ -113,7 +111,7 @@ class ReasoningGraphModule(object):
             return [clause]
         else:
             theta_list = generate_substitutions([clause.head] + clause.body, self.terms, self.max_term_depth)
-            assert len(theta_list) < 1000000, "Too many substitutions for:{}.".format(str(clause))
+            #assert len(theta_list) < 1000000, "Too many substitutions for:{}.".format(str(clause))
             # print("{} substitutions to ground!".format(len(theta_list)))
             ground_clauses = []
             for i, theta in enumerate(theta_list):

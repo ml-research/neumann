@@ -1,3 +1,9 @@
-reverse(f(X,*),f(X,*)):-.
-reverse(f(X,Xs),R):-reverse(Xs,T),append(T,f(X,*),R).
-reverse(f(X,Xs),R):-reverse(Xs,T).
+#reverse(f(X,*),f(X,*)):-.
+#reverse(f(X,Xs),R):-reverse(Xs,T),append(T,f(X,*),R).
+#reverse(f(X,Y),Z)):-reverse(Y,V),append(V,f(X,*),Z).
+#reverse(f(X,Xs),R):-reverse(Xs,T).
+reverse(X,Y,Z):-.
+# accRev([H|T],A,R):-  accRev(T,[H|A],R).
+# reverse(f(X,Y),Z,V):-reverse(Y,f(X,Z),V)
+# accRev([],A,A).
+# rev(L,R):-  accRev(L,[],R).

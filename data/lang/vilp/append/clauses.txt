@@ -1,14 +1,14 @@
-append(*,X,X):-.
+#append(*,X,X):-.
 # append(*,X,Y):-.
-append(X,*,X):-.
+#append(X,*,X):-.
 # append(X,*,Y):-.
 # append(X,X,Y):-.
 # append(X,Y,X):-.
 # append(X,Y,Y):-.
-# append(X,Y,Z):-.
-append(X,Y,Z):-append(Y,X,Z).
-append(X,Y,Z):-append(Y,Z,X).
-append(f(X,Y),Z,f(X,V)):-append(Y,Z,V).
+append(X,Y,Z):-.
+#append(X,Y,Z):-append(Y,X,Z).
+#append(X,Y,Z):-append(Y,Z,X).
+#append(f(X,Y),Z,f(X,V)):-append(Y,Z,V).
 # append(X,Y,f(Z,V)):-.
 # append(X,Y,f(Z,V)):-append(X,V,Y).
 # append(X,Y,f(Z,V)):-append(Y,V,X).

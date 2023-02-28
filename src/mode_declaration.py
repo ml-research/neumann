@@ -165,7 +165,10 @@ def get_mode_declarations_vilp(lang, dataset):
     elif dataset == 'reverse':
         modeb_list = [
         ModeDeclaration('body', 1, lang.get_pred_by_name(
-            'reverse'), [p_colors, p_colors])]
+            'reverse'), [p_colors, p_colors, p_colors])
+        #ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #    'append'), [p_colors, p_colors, p_colors]),
+            ]
     elif dataset == 'sort':
         modeb_list = [
         ModeDeclaration('body', 1, lang.get_pred_by_name(

@@ -47,7 +47,7 @@ def update_by_clauses(neumann, clauses, softmax_temp=1.0):
     ### Do we need old clauses?? too general clauses should be excluded
 
     RGM = ReasoningGraphModule(clauses=clauses+neumann.bk_clauses, facts=neumann.atoms,
-                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device)
+                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device, grounding_casche=neumann.rgm.grounding_casche)
     NEUM = NEUMANN(atoms=neumann.atoms, clauses=clauses, message_passing_module=neumann.mpm, reasoning_graph_module=RGM,
                    bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
     return NEUM
@@ -63,7 +63,7 @@ def update_by_refinement(neumann, clause_scores, clause_generator, softmax_temp=
     new_clauses = sorted(list(set(generated_clauses + pruned_old_clauses)))
 
     RGM = ReasoningGraphModule(clauses=new_clauses + neumann.bk_clauses, facts=neumann.atoms,
-                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device)
+                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device, grounding_casche=neumann.rgm.grounding_casche)
     NEUM = NEUMANN(atoms=neumann.atoms, clauses=new_clauses, message_passing_module=neumann.mpm, reasoning_graph_module=RGM,
                    bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
     return NEUM, generated_clauses

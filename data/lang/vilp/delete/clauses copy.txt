@@ -1,0 +1,145 @@
+#delete(X,*,*):-.
+#delete(X,*,Y):-.
+delete(X,*,f(X,Y)):-.
+#delete(X,*,f(Y,Z)):-.
+#delete(X,Y,*):-.
+#delete(X,Y,Y):-.
+#delete(X,Y,Z):-.
+#delete(X,Y,Z):-delete(X,Z,Y).
+#delete(X,Y,f(X,Y)):-.
+#delete(X,Y,f(X,Z)):-.
+#delete(X,Y,f(Z,V)):-.
+#delete(X,Y,f(Z,V)):-delete(X,V,Y).
+#delete(X,Y,f(Z,V)):-delete(X,Y,V).
+#delete(X,Y,f(Z,V)):-delete(X,f(Z,V),Y).
+delete(X,Y,f(Z,V)):-delete(Z,V,Y).
+delete(X,Y,f(Z,V)):-delete(Z,Y,V).
+#delete(X,Y,f(Z,Y)):-.
+delete(X,f(X,Y),Y):-.
+#delete(X,f(X,Y),Z):-.
+delete(X,f(X,Y),Z):-delete(X,Z,Y).
+delete(X,f(X,Y),f(X,Z)):-.
+delete(X,f(X,Y),f(X,Z)):-delete(X,Y,Z).
+delete(X,f(X,Y),f(Z,V)):-.
+delete(X,f(X,Y),f(Z,V)):-delete(X,Y,V).
+delete(X,f(Y,Z),*):-.
+#delete(X,f(Y,Z),V):-.
+delete(X,f(Y,Z),V):-delete(X,V,Z).
+delete(X,f(Y,Z),V):-delete(X,V,f(Y,Z)).
+delete(X,f(Y,Z),V):-delete(X,Z,V).
+delete(X,f(Y,Z),V):-delete(Y,V,Z).
+delete(X,f(Y,Z),V):-delete(Y,Z,V).
+#delete(X,f(Y,Z),Z):-.
+delete(X,f(Y,Z),Z):-delete(X,Z,Z).
+#delete(X,f(Y,Z),f(V,W)):-.
+delete(X,f(Y,Z),f(V,W)):-delete(V,W,Z).
+delete(X,f(Y,Z),f(V,W)):-delete(V,Z,W).
+delete(X,f(Y,Z),f(V,W)):-delete(X,W,Z).
+delete(X,f(Y,Z),f(V,W)):-delete(X,Z,W).
+delete(X,f(Y,Z),f(V,W)):-delete(X,f(V,W),Z).
+delete(X,f(Y,Z),f(V,W)):-delete(Y,W,Z).
+#delete(X,f(Y,Z),f(V,Z)):-.
+delete(X,f(Y,Z),f(V,Z)):-delete(Y,Z,Z).
+#delete(X,f(Y,Z),f(X,V)):-.
+#delete(X,f(Y,Z),f(X,V)):-delete(Y,Z,V).
+#delete(X,f(Y,Z),f(Y,V)):-.
+delete(X,f(Y,Z),f(Y,V)):-delete(X,V,Z).
+delete(X,f(Y,Z),f(Y,V)):-delete(X,Z,V).
+delete(X,f(Y,Z),f(Y,V)):-delete(Y,V,Z).
+delete(X,f(Y,Z),f(Y,V)):-delete(Y,Z,V).
+#delete(X,f(Y,Z),f(Y,Z)):-.
+delete(X,f(Y,Z),f(Y,Z)):-delete(X,Z,Z).
+
+##delete(X,f(Y,Z),f(Y,V)):-delete(X,Z,V).
+#delete(X,Y,Z):-.
+##delete(X,Y,Z):-delete(X,Z,Y).
+##delete(X,Y,f(X,Z)):-.
+##delete(X,Y,f(Z,V)):-.
+##delete(X,Y,f(Z,V)):-delete(X,V,Y).
+##delete(X,Y,f(Z,V)):-delete(Z,V,Y).
+##delete(X,f(X,Y),Z):-.
+##delete(X,f(X,Y),f(X,Z)):-.
+## delete(X,f(X,Y),f(Z,V)):-.
+##delete(X,f(X,Y),f(Z,V)):-delete(X,Y,V).
+##delete(X,f(X,Y),f(Z,V)):-delete(Z,V,Y).
+##delete(X,f(X,Y),f(Z,V)):-delete(Z,Y,V).
+##delete(X,f(Y,Z),V):-.
+##delete(X,f(Y,Z),V):-delete(X,V,Z).
+##delete(X,f(Y,Z),V):-delete(Y,V,Z).
+##delete(X,f(Y,Z),Z):-.
+##delete(X,f(Y,Z),f(X,V)):-.
+##delete(X,f(Y,Z),f(X,V)):-delete(X,Z,V).
+##delete(X,f(Y,Z),f(X,V)):-delete(Y,V,Z).
+## delete(X,f(Y,Z),f(Y,V)):-.
+##delete(X,f(Y,Z),f(Y,V)):-delete(X,V,Z).
+##delete(X,f(Y,Z),f(Y,V)):-delete(X,Z,V).
+##delete(X,f(Y,Z),f(Y,V)):-delete(Y,V,Z).
+##delete(X,f(Y,Z),f(Y,V)):-delete(Y,Z,V).
+##
+#
+# delete(X,*,*):-.
+# delete(X,*,Y):-.
+# delete(X,*,f(Y,Z)):-.
+# delete(X,Y,*):-.
+# delete(X,Y,Y):-.
+# delete(X,Y,Z):-.
+# delete(X,Y,f(X,Y)):-.
+# delete(X,Y,f(X,Y)):-delete(X,Y,Y).
+# delete(X,Y,f(X,Z)):-.
+# delete(X,Y,f(X,Z)):-delete(X,Y,Z).
+# delete(X,Y,f(X,Z)):-delete(X,Z,Y).
+# delete(X,Y,f(Z,V)):-.
+# delete(X,Y,f(Z,V)):-delete(X,V,Y).
+# delete(X,Y,f(Z,V)):-delete(X,Y,V).
+# delete(X,Y,f(Z,V)):-delete(X,f(Z,V),Y).
+# delete(X,Y,f(Z,V)):-delete(Z,V,Y).
+# delete(X,Y,f(Z,V)):-delete(Z,Y,V).
+# delete(X,Y,f(Z,Y)):-.
+# delete(X,Y,f(Z,Y)):-delete(X,Y,Y).
+# delete(X,Y,f(Z,Y)):-delete(Z,Y,Y).
+#delete(X,f(X,Y),Z):-.
+#delete(X,f(X,Y),Z):-delete(X,Y,Z).
+#delete(X,f(X,Y),Z):-delete(X,Z,Y).
+#delete(X,f(X,Y),f(X,Z)):-delete(X,Z,f(X,Y)).
+#delete(X,f(X,Y),f(Z,V)):-.
+#delete(X,f(X,Y),f(Z,V)):-delete(X,V,f(X,Y)).
+#delete(X,f(X,Y),f(Z,V)):-delete(X,Y,V).
+#delete(X,f(X,Y),f(Z,V)):-delete(Z,V,f(X,Y)).
+#delete(X,f(X,Y),f(Z,V)):-delete(Z,f(X,Y),V).
+#delete(X,f(X,Y),f(Z,Y)):-.
+#delete(X,f(X,Y),f(Z,Y)):-delete(X,Y,f(X,Y)).
+#delete(X,f(Y,Z),*):-.
+#delete(X,f(Y,Z),V):-.
+#delete(X,f(Y,Z),V):-delete(X,V,f(Y,Z)).
+#delete(X,f(Y,Z),V):-delete(X,Z,V).
+#delete(X,f(Y,Z),V):-delete(Y,V,Z).
+#delete(X,f(Y,Z),V):-delete(Y,Z,V).
+#delete(X,f(Y,Z),Z):-.
+#delete(X,f(Y,Z),Z):-delete(X,Z,Z).
+##delete(X,f(Y,Z),f(V,W)):-.
+#delete(X,f(Y,Z),f(V,W)):-delete(V,W,Z).
+#delete(X,f(Y,Z),f(V,W)):-delete(V,Z,W).
+#delete(X,f(Y,Z),f(V,W)):-delete(X,W,Z).
+#delete(X,f(Y,Z),f(V,W)):-delete(X,Z,W).
+#delete(X,f(Y,Z),f(V,W)):-delete(X,f(V,W),Z).
+#delete(X,f(Y,Z),f(V,W)):-delete(Y,W,Z).
+#delete(X,f(Y,Z),f(V,Z)):-.
+#delete(X,f(Y,Z),f(V,Z)):-delete(V,Z,f(Y,Z)).
+#delete(X,f(Y,Z),f(V,Z)):-delete(V,f(Y,Z),Z).
+#delete(X,f(Y,Z),f(V,Z)):-delete(X,Z,f(Y,Z)).
+#delete(X,f(Y,Z),f(V,Z)):-delete(Y,Z,Z).
+#delete(X,f(Y,Z),f(X,V)):-.
+#delete(X,f(X,Y),Y):-.
+#delete(X,f(Y,Z),f(X,V)):-delete(X,V,f(Y,Z)).
+#delete(X,f(Y,Z),f(X,V)):-delete(X,f(Y,Z),V).
+#delete(X,f(Y,Z),f(X,V)):-delete(Y,Z,V).
+#delete(X,f(Y,Z),f(X,Z)):-.
+#delete(X,f(Y,Z),f(X,Z)):-delete(X,Z,f(Y,Z)).
+#delete(X,f(Y,Z),f(Y,V)):-.
+#delete(X,f(Y,Z),f(Y,V)):-delete(X,V,f(Y,Z)).
+#delete(X,f(Y,Z),f(Y,V)):-delete(Y,V,f(Y,Z)).
+#delete(X,f(Y,Z),f(Y,V)):-delete(Y,Z,V).
+#delete(X,f(Y,Z),f(Y,V)):-delete(X,Z,V).
+#delete(X,f(Y,Z),f(Y,V)):-delete(Y,f(Y,Z),V).
+#delete(X,f(Y,Z),f(Y,Z)):-.
+#delete(X,f(Y,Z),f(Y,Z)):-delete(X,Z,f(Y,Z)).

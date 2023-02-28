@@ -20,13 +20,13 @@ class RefinementGenerator(object):
         max number of atoms in body of clauses
     """
 
-    def __init__(self, lang, mode_declarations):
+    def __init__(self, lang, mode_declarations, max_depth=1, max_body_len=1, max_var_num=5):
         self.lang = lang
         self.mode_declarations = mode_declarations
         self.vi = 0 # counter for new variable generation
-        self.max_depth = 1
-        self.max_body_len=1
-        self.max_var_num = 5
+        self.max_depth = max_depth
+        self.max_body_len = max_body_len
+        self.max_var_num = max_var_num
 
 
     def _init_recall_counter_dic(self, mode_declarations):

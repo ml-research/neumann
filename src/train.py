@@ -2,6 +2,7 @@ import argparse
 import math
 import os
 import pickle
+import random
 import time
 
 import numpy as np
@@ -81,6 +82,8 @@ def get_args():
                         help="The depth to specify the clauses to be pruned after generation.")
     parser.add_argument("--n-sample", type=int, default=5,
                         help="The number of samples on each step of clause generation..")
+    parser.add_argument("--seed", type=int, default=0,
+                        help="Random seeedß.")
     args = parser.parse_args()
     return args
 
@@ -177,7 +180,7 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
             # update the weights of clauses
             optimizer.step()
 
-            writer.add_scalar("metric/train_loss", loss, global_step=iteration)
+            #writer.add_scalar("metric/train_loss", loss, global_step=iteration)
             wandb.log({'metric/training_loss_trial_{}'.format(trial): loss.item()})
             iteration += 1
 
@@ -200,9 +203,9 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
         # record time
         epoch_time = time.time() - start_time
         time_list.append(epoch_time)
-        writer.add_scalar("metric/epoch_time_mean", np.mean(time_list))
-        writer.add_scalar("metric/epoch_time_std", np.std(time_list))
-        writer.add_scalar("metric/train_loss_epoch", loss_i, global_step=epoch)
+        #writer.add_scalar("metric/epoch_time_mean", np.mean(time_list))
+        #writer.add_scalar("metric/epoch_time_std", np.std(time_list))
+        #writer.add_scalar("metric/train_loss_epoch", loss_i, global_step=epoch)
         wandb.log({'metric/training_loss_epoch': loss_i})
 
         rtpt.step()#subtitle=f"loss={loss_i:2.2f}")
@@ -212,15 +215,16 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
         #    NEUMANN.print_valuation_batch(V_T)
         #    print("Epoch {}: ".format(epoch))
         #    NEUMANN.print_program()
-        if epoch > 0 and epoch % 10 == 0:
+        if (epoch > 0 and epoch % 5 == 0) or (trial > args.trial and epoch % 5 == 0):
             NEUMANN.print_program()
             print("Predicting on validation data set...")
             acc_val, rec_val, th_val = predict(
-                NEUMANN, I2F, val_loader, args, device, th=0.7, split='val')
-            writer.add_scalar("metric/val_acc", acc_val, global_step=epoch)
-            print("acc_val: ", acc_val)
-            if acc_val > 0.95:
-                break
+                NEUMANN, I2F, val_loader, args, device, th=0.5, split='val')
+            wandb.log({'metric/validation_accuracy': acc_val})
+            # writer.add_scalar("metric/val_acc", acc_val, global_step=epoch)
+            #print("acc_val: ", acc_val)
+            #if acc_val > 0.95:
+            #    break
         """
         if epoch % 20 == 0 and epoch > 0:
 
@@ -254,7 +258,13 @@ def main(n):
     print('device: ', device)
     name = 'rgnn/' + args.dataset + '/' + str(n)
     writer = SummaryWriter(f"runs/{name}", purge_step=0)
-    wandb.init(project="NEUMANN", name="{}:seed_{}".format(args.dataset, n))
+
+    #seed = n
+    seed = args.seed
+    seed_everything(seed)
+
+    # start weight and biases
+    wandb.init(project="NEUMANN", name="{}:seed_{}".format(args.dataset, args.seed))
 
 
     # Create RTPT object
@@ -339,7 +349,7 @@ def main(n):
         # Get torch data loader
         train_loader, val_loader,  test_loader = get_data_loader(args, device, pos_ratio, neg_ratio)
         NEUMANN, new_gen_clauses = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp)
-        clause_generator.print_tree()
+        # clause_generator.print_tree()
         params = list(NEUMANN.parameters())
         optimizer = torch.optim.RMSprop(params, lr=lr)
         # optimizer = torch.optim.SGD(params, lr=lr)
@@ -349,7 +359,7 @@ def main(n):
         trial += 1
         #NEUMANN.print_program()
         
-    epochs = 50
+    epochs = 100
     pos_ratio = 0.1
     neg_ratio = 1.0
     softmax_temp = 1e-2
@@ -371,6 +381,8 @@ def main(n):
     optimizer.zero_grad()
     loss_list, clause_scores = train_neumann(args, NEUMANN, I2F, optimizer, train_loader,
                           val_loader, test_loader, device, writer, rtpt, epochs=epochs, trial=trial)
+    
+    wandb.finish()
     NEUMANN.print_program()
     # validation split
     print("Predicting on validation data set...")
@@ -398,6 +410,13 @@ def main(n):
     print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
 
 
+def seed_everything(seed=42):
+    os.environ["PL_GLOBAL_SEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
 if __name__ == "__main__":
-    for i in range(2):
-        main(n=i)
+    main(n=1)

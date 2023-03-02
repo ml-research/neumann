@@ -25,7 +25,7 @@ class ReasoningGraphModule(object):
         init (bool): The flag whether the initialization is performed or not.
     """
 
-    def __init__(self, clauses, facts, terms, lang, device, max_term_depth, init=True, grounding_casche={}):
+    def __init__(self, clauses, facts, terms, lang, device, max_term_depth, init=True, clause_casche=set(), grounding_casche={}):
         self.lang = lang
         self.clauses = clauses
         self.facts = facts
@@ -34,6 +34,7 @@ class ReasoningGraphModule(object):
         self.device = device
         self.max_term_depth = max_term_depth
         self.grounding_casche = grounding_casche
+        self.clause_casche = clause_casche
         if init:
             self.fact_index_dict = self._build_fact_index_dict(facts)
             self.grounded_clauses, self.clause_indices = self._ground_clauses(
@@ -95,8 +96,9 @@ class ReasoningGraphModule(object):
 
         ground_clauses_list = Parallel(n_jobs=20)([delayed(self._ground_clause)(clause) for clause in clauses])
         # update casche
-        for i, c in enumerate(clauses):
-            self.grounding_casche[str(c)] = ground_clauses_list[i]
+        #for i, c in enumerate(clauses):
+        #    self.clause_casche.add(c)
+        #    self.grounding_casche[str(c)] = ground_clauses_list[i]
 
         all_ground_clauses = []
         all_clause_indices = []
@@ -108,9 +110,10 @@ class ReasoningGraphModule(object):
         return all_ground_clauses, all_clause_indices
     
     def _ground_clause(self, clause):
-        if str(clause) in self.grounding_casche:
-            print("Grounding is already in the casche!: {}".format(clause))
-            return self.grounding_casche[str(clause)]
+        #if str(clause) in self.grounding_casche:
+        #if clause in self.clause_casche:
+        #    print("Grounding is already in the casche!: {}".format(clause))
+        #    return self.grounding_casche[str(clause)]
         # print('Grounding Clause: ', clause)
         # TODO: Do we need head unification????
         if len(clause.all_vars()) == 0:

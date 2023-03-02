@@ -27,17 +27,17 @@ from visualize import plot_reasoning_graph
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch-size", type=int, default=2,
+    parser.add_argument("-bs", "--batch-size", type=int, default=4,
                         help="Batch size to infer with")
     parser.add_argument("--batch-size-bs", type=int,
                         default=1, help="Batch size in beam search")
     parser.add_argument("--num-objects", type=int, default=3,
                         help="The maximum number of objects in one image")
-    parser.add_argument("--dataset")  # , choices=["member"])
+    parser.add_argument("-ds","--dataset")  # , choices=["member"])
     parser.add_argument("--rtpt-name", default="HS")  # , choices=["member"])
     parser.add_argument(
-        "--dataset-type", choices=['vilp', 'clevr-hans', 'kandinsky'], help="vilp or kandinsky or clevr")
-    parser.add_argument('--device', default='cpu',
+       "-dt", "--dataset-type", choices=['vilp', 'clevr-hans', 'kandinsky'], help="vilp or kandinsky or clevr")
+    parser.add_argument("-d", "--device", default='cpu',
                         help='cuda device, i.e. 0 or cpu')
     parser.add_argument("--no-cuda", action="store_true",
                         help="Run on CPU instead of GPU (not recommended)")
@@ -51,7 +51,7 @@ def get_args():
                         help='Smooth parameter in the softor function')
     parser.add_argument("--plot", action="store_true",
                         help="Plot images with captions.")
-    parser.add_argument("--plot-graph", action="store_true",
+    parser.add_argument("-pg", "--plot-graph", action="store_true",
                         help="Plot images with captions.")
     parser.add_argument("--t-beam", type=int, default=4,
                         help="Number of rule expantion of clause generation.")
@@ -59,10 +59,10 @@ def get_args():
                         help="The size of the beam.")
     parser.add_argument("--n-max", type=int, default=50,
                         help="The maximum number of clauses.")
-    parser.add_argument("--program-size", "-m", type=int, default=1,
+    parser.add_argument("-ps", "--program-size", type=int, default=1,
                         help="The size of the logic program.")
     #parser.add_argument("--n-obj", type=int, default=2, help="The number of objects to be focused.")
-    parser.add_argument("--epochs", type=int, default=2,
+    parser.add_argument("-e", "--epochs", type=int, default=2,
                         help="The number of epochs.")
     parser.add_argument("--lr", type=float, default=1e-3,
                         help="The learning rate.")
@@ -70,20 +70,24 @@ def get_args():
                         help="The number of data to be used.")
     parser.add_argument("--pre-searched", action="store_true",
                         help="Using pre searched clauses.")
-    parser.add_argument("-T", "--infer-step", type=int, default=8,
+    parser.add_argument("-is", "--infer-step", type=int, default=8,
                         help="The number of steps of forward reasoning.")
-    parser.add_argument("--term-depth", type=int, default=3,
+    parser.add_argument("-td", "--term-depth", type=int, default=3,
                         help="The max depth of terms to be generated.")
-    parser.add_argument("--body-len", type=int, default=2,
+    parser.add_argument("-bl", "--body-len", type=int, default=2,
                         help="The len of body of clauses to be generated.")
-    parser.add_argument("--trial", type=int, default=2,
+    parser.add_argument("-tr","--trial", type=int, default=2,
                         help="The number of trials to generate clauses before the final training.")
-    parser.add_argument("--th-depth", type=int, default=2,
+    parser.add_argument("-thd", "--th-depth", type=int, default=2,
                         help="The depth to specify the clauses to be pruned after generation.")
-    parser.add_argument("--n-sample", type=int, default=5,
+    parser.add_argument("-ns", "--n-sample", type=int, default=5,
                         help="The number of samples on each step of clause generation..")
-    parser.add_argument("--seed", type=int, default=0,
-                        help="Random seeedß.")
+    parser.add_argument("-s", "--seed", type=int, default=0,
+                        help="Random seed.")
+    #  max_depth=1, max_body_len=1, max_var_num=5
+    parser.add_argument("-md", "--max-depth", type=int, default=1, help="Max depth of terms.")
+    parser.add_argument("-ml", "--max-body-len", type=int, default=1, help="Max length of the body.")
+    parser.add_argument("-mv", "--max-var", type=int, default=4, help="Max number of variables.")
     args = parser.parse_args()
     return args
 
@@ -286,7 +290,7 @@ def main(n):
                              program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
                              num_objects=args.num_objects, infer_step=args.infer_step, train=not(args.no_train))
     # clause generator
-    refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations_vilp(lang, args.dataset))
+    refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations_vilp(lang, args.dataset), max_depth=args.max_depth, max_body_len=args.max_body_len, max_var_num=args.max_var)
     clause_generator = ClauseGenerator(refinement_generator=refinement_generator, root_clause=clauses[0], th_depth=args.th_depth, n_sample=args.n_sample)
     writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
     writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))

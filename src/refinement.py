@@ -152,6 +152,7 @@ class RefinementGenerator(object):
         C_refined.extend(self.apply_func(clause))
         C_refined.extend(self.subs_const(clause))
         C_refined.extend(self.subs_var(clause))
+        C_refined.extend(self.swap_vars(clause))
         result = self._remove_invalid_clauses(list(set(C_refined)))
         return result
 
@@ -211,6 +212,33 @@ class RefinementGenerator(object):
             result.rename_vars()
             refined_clauses.append(result)
         return refined_clauses
+
+    def swap_vars(self, clause):
+        """Swapping variables in the body"""
+        if len(clause.body) == 0:
+            return []
+        else:
+            refined_clauses = []
+            var_dtype_list = get_all_vars_with_dtype(clause.body)
+            for vd_1, vd_2 in itertools.combinations(var_dtype_list, 2):
+                # vd1, vd2 are tuples of (var, dtype)
+                var_1 = vd_1[0]
+                dtype_1 = vd_1[1]
+                var_2 = vd_2[0]
+                dtype_2 = vd_2[1]
+                if dtype_1 == dtype_2 and var_1 != var_2:
+                    var_tmp = Var("__tmp__")
+                    new_body = []
+                    for b_atom in clause.body:
+                        new_b_atom = subs(b_atom, var_1, var_tmp)
+                        new_b_atom = subs(new_b_atom, var_2, var_1)
+                        new_b_atom = subs(new_b_atom, var_tmp, var_2)
+                        new_body.append(new_b_atom)
+                    new_clause = Clause(clause.head, new_body)
+                    refined_clauses.append(new_clause)
+            return refined_clauses
+
+
 
     def subs_const(self, clause):
         """

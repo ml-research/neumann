@@ -133,7 +133,7 @@ class ReasoningGraphModule(object):
                         Clause(ground_head, ground_body))
 
             ground_clauses = self._remove_redundunt_ground_clauses(ground_clauses)
-            print("Grounding completed with {} substitutions: {}. Saved in casche!".format(len(theta_list), str(clause)))
+            print("Grounding completed with {} substitutions: {}.".format(len(theta_list), str(clause)))
             return ground_clauses
 
     def _build_rg(self):

@@ -1,2 +1,6 @@
-sort(X,Y):-perm(X,Y),is_sorted(Y).
-sort(X,Y):-perm(X,Y).
+sort(X,Y):-.
+is_sorted(X):-.
+#sort(X,Y):-perm(X,Y),is_sorted(Y).
+# is sorted
+#is_sorted(f(X,f(Y,Z))):-smaller(X,Y),is_sorted(f(Y,Z)).
+#is_sorted(f(X,*)):-.

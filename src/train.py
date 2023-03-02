@@ -74,6 +74,8 @@ def get_args():
                         help="The number of steps of forward reasoning.")
     parser.add_argument("-td", "--term-depth", type=int, default=3,
                         help="The max depth of terms to be generated.")
+    parser.add_argument("-pd", "--program-depth", type=int, default=3,
+                        help="The max depth of terms to in the clauses to be generated.")
     parser.add_argument("-bl", "--body-len", type=int, default=2,
                         help="The len of body of clauses to be generated.")
     parser.add_argument("-tr","--trial", type=int, default=2,
@@ -215,6 +217,7 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
         rtpt.step()#subtitle=f"loss={loss_i:2.2f}")
         print("loss: ", loss_i)
 
+        # NEUMANN.print_valuation_batch(V_T)
         #if epoch % 1 == 0 and epoch > 0:
         #    NEUMANN.print_valuation_batch(V_T)
         #    print("Epoch {}: ".format(epoch))
@@ -290,8 +293,8 @@ def main(n):
                              program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
                              num_objects=args.num_objects, infer_step=args.infer_step, train=not(args.no_train))
     # clause generator
-    refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations_vilp(lang, args.dataset), max_depth=args.max_depth, max_body_len=args.max_body_len, max_var_num=args.max_var)
-    clause_generator = ClauseGenerator(refinement_generator=refinement_generator, root_clause=clauses[0], th_depth=args.th_depth, n_sample=args.n_sample)
+    refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations_vilp(lang, args.dataset), max_depth=args.program_depth, max_body_len=args.max_body_len, max_var_num=args.max_var)
+    clause_generator = ClauseGenerator(refinement_generator=refinement_generator, root_clauses=clauses, th_depth=args.th_depth, n_sample=args.n_sample)
     writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
     writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))
     num_nodes = len(NEUMANN.rgm.atom_node_idxs) + \

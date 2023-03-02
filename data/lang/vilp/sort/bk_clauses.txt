@@ -20,7 +20,3 @@ delete(X,f(Y,Z),f(Y,V)):-delete(X,Z,V).
 # permutation
 perm(f(X,Y),Z):-perm(Y,V),delete(X,Z,V).
 # perm(f(H,T),S):-perm(T,P),append(X,Y,P),append(X,f(H,Y),S).
-
-# is sorted
-is_sorted(f(X,*)):-.
-is_sorted(f(X,f(Y,T))):-smaller(X,Y),is_sorted(f(Y,T)).

@@ -152,7 +152,7 @@ class RefinementGenerator(object):
         C_refined.extend(self.apply_func(clause))
         C_refined.extend(self.subs_const(clause))
         C_refined.extend(self.subs_var(clause))
-        C_refined.extend(self.swap_vars(clause))
+        # C_refined.extend(self.swap_vars(clause))
         result = self._remove_invalid_clauses(list(set(C_refined)))
         return result
 
@@ -244,9 +244,11 @@ class RefinementGenerator(object):
         """
         z/a for every variable z in C and every constant a in the language
         """
-        if (len(clause.body) >= self.max_body_len) or (clause.max_depth() >= 1):
-            return []
+        #if (len(clause.body) >= self.max_body_len) or (clause.max_depth() >= 1):
+        #    return []
 
+        if (len(clause.body) >= self.max_body_len) or (clause.max_depth() >= 2):
+            return []
         refined_clauses = []
         all_vars = clause.head.all_vars_by_dtype(DataType('colors'))
         consts = [term for term in self.lang.get_by_dtype_name('colors') if type(term) == Const]

@@ -4,17 +4,21 @@ import torch.nn.functional as F
 from anytree import Node, PreOrderIter, RenderTree
 from anytree.search import find_by_attr, findall
 
+from fol.logic import Clause
 from logic_utils import add_true_atom, add_true_atoms, remove_true_atoms, true
 
 
 class ClauseGenerator(object):
     """Refinement-based clause generator that holds a tree representation of the generation steps.
     """
-    def __init__(self, refinement_generator, root_clause, th_depth, n_sample):
+    def __init__(self, refinement_generator, root_clauses, th_depth, n_sample):
         self.refinement_generator = refinement_generator
         self.th_depth = th_depth
-        self.root_clause = add_true_atom(root_clause)
-        self.tree = Node(name="root", clause=self.root_clause)
+        self.root_clauses = add_true_atoms(root_clauses)
+        self.tree = Node(name="root", clause=Clause(true,[]))
+        for c in root_clauses:
+            Node(name=str(c), clause=c, parent=self.tree)
+            #Node(name=str(nc), clause=nc, =target_node)
         self.n_sample = n_sample
         self.is_root = True
         self.refinement_history = set()

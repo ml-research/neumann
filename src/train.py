@@ -62,7 +62,7 @@ def get_args():
     parser.add_argument("-ps", "--program-size", type=int, default=1,
                         help="The size of the logic program.")
     #parser.add_argument("--n-obj", type=int, default=2, help="The number of objects to be focused.")
-    parser.add_argument("-e", "--epochs", type=int, default=2,
+    parser.add_argument("-e", "--epochs", type=int, default=100,
                         help="The number of epochs.")
     parser.add_argument("--lr", type=float, default=1e-3,
                         help="The learning rate.")
@@ -90,6 +90,9 @@ def get_args():
     parser.add_argument("-md", "--max-depth", type=int, default=1, help="Max depth of terms.")
     parser.add_argument("-ml", "--max-body-len", type=int, default=1, help="Max length of the body.")
     parser.add_argument("-mv", "--max-var", type=int, default=4, help="Max number of variables.")
+    parser.add_argument("-te", "--trial-epochs", type=int, default=5, help="The number of epochs in trials.")
+    parser.add_argument("-pr", "--pos-ratio", type=float, default=0.1, help="The ratio of the positive examples in the final training.")
+    parser.add_argument("-nr", "--neg-ratio", type=float, default=1.0, help="The ratio of the negative examples in the final training.")
     args = parser.parse_args()
     return args
 
@@ -334,9 +337,10 @@ def main(n):
     while trial < args.trial:
         print("=====TRIAL: {}====".format(trial))
 
-        epochs = 5
+        epochs = args.trial_epochs
         pos_ratio = 1.0
-        neg_ratio =  min(0.2*(trial+1), 1.0)
+        #neg_ratio =  min(0.2*(trial+1), 1.0)
+        neg_ratio = 0.1
         softmax_temp = 1.0
         lr = 1e-2
         """
@@ -366,9 +370,12 @@ def main(n):
         trial += 1
         #NEUMANN.print_program()
         
-    epochs = 100
-    pos_ratio = 0.1
-    neg_ratio = 1.0
+    epochs = args.epochs
+    # for delete:
+    # pos_ratio = 0.1
+    # for sort:
+    pos_ratio = args.pos_ratio
+    neg_ratio = args.neg_ratio
     softmax_temp = 1e-2
     lr =  1e-2#  * pow(0.1, min(trial, 3))
     print("==== Generated Refinement Tree ====")

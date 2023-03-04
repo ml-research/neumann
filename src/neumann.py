@@ -258,8 +258,8 @@ class NEUMANN(nn.Module):
             idxs = np.argsort(-v)
             for i in idxs:
                 if v[i] > 0.2:
-                    if not self.atoms[i].pred.name in ['member', 'not_member', 'diff_color', 'right_most'] and\
-                        not self.atoms[i].pred.name in ['first_obj', 'second_obj', 'third_obj', 'append', 'sort', 'reverse'] and\
+                    if not self.atoms[i].pred.name in ['member', 'not_member', 'get_color', 'perm', 'delete', 'diff_color', 'right_most'] and\
+                        not self.atoms[i].pred.name in ['first_obj', 'second_obj', 'third_obj', 'append',  'reverse'] and\
                             not self.atoms[i].pred.name in ['left_of', 'same_position', 'smaller', 'color', 'chain']:
                         print(i, self.atoms[i], ': ', round(v[i], 3))
 

@@ -1,23 +1,22 @@
 import argparse
+import pickle
 import time
 
 import numpy as np
-from sklearn.metrics import accuracy_score, recall_score, roc_curve
-
 import torch
-
-import pickle
-
+from rtpt import RTPT
+from sklearn.metrics import accuracy_score, recall_score, roc_curve
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-from rtpt import RTPT
 
-from neumann_utils import get_model, get_prob, get_behind_the_scenes_loader, get_clause_evaluator
 from logic_utils import get_lang
 from mode_declaration import get_mode_declarations
+from neumann_utils import (get_behind_the_scenes_loader, get_clause_evaluator,
+                           get_model, get_prob)
+from tensor_encoder import TensorEncoder
+
 # from nsfr_utils import save_images_with_captions, to_plot_images_clevr, generate_captions
 
-from tensor_encoder import TensorEncoder
 
 
 def get_args():
@@ -61,7 +60,7 @@ def get_args():
                         help="The number of data to be used.")
     parser.add_argument("--pre-searched", action="store_true",
                         help="Using pre searched clauses.")
-    parser.add_argument("--infer-step", type=int, default=3,
+    parser.add_argument("--infer-step", type=int, default=6,
                         help="The number of steps of forward reasoning.")
     parser.add_argument("--term-depth", type=int, default=3,
                         help="The number of steps of forward reasoning.")
@@ -69,7 +68,7 @@ def get_args():
     args = parser.parse_args()
     return args
 
-# def get_nsfr_model(args, lang, clauses, atoms, bk, clauses_bk, device, train=False):
+# def get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False):
 
 
 def discretise_NSFR(NSFR, args, device):
@@ -79,7 +78,7 @@ def discretise_NSFR(NSFR, args, device):
         lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
     # Discretise NSFR rules
     clauses = NSFR.get_clauses()
-    return get_nsfr_model(args, lang, clauses, atoms, bk, clauses_bk, device, train=False)
+    return get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False)
 
 
 def predict(NSFR, I2F, loader, args, device,  th=None, split='train'):
@@ -103,7 +102,7 @@ def predict(NSFR, I2F, loader, args, device,  th=None, split='train'):
         # V_0 = add_question_info(V_0, query)
 
         V_T = NSFR(V_0)
-        NSFR.print_valuation_batch(V_T)
+        # NSFR.print_valuation_batch(V_T)
         predicted = get_prob(V_T, NSFR, args)
         print('predicted: ', predicted)
         predicted = to_one_label(predicted, target_set)
@@ -209,7 +208,7 @@ def main(n):
     # load logical representations
     lark_path = 'src/lark/exp.lark'
     lang_base_path = 'data/lang/'
-    lang, clauses, bk, clauses_bk, terms, atoms = get_lang(
+    lang, clauses, bk, bk_clauses, terms, atoms = get_lang(
         lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
 
     print("{} Atoms:".format(len(atoms)))
@@ -218,14 +217,14 @@ def main(n):
     test_loader = get_behind_the_scenes_loader(args.question_json_path, args.batch_size, lang, device)
 
     # Neuro-Symbolic Forward Reasoner for clause generation
-    # CE = get_clause_evaluator(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, clauses_bk=clauses_bk, device=device)#torch.device('cpu'))
+    # CE = get_clause_evaluator(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses, device=device)#torch.device('cpu'))
     ###mode_declarations = get_mode_declarations(dataset=args.dataset, lang=lang)
 
     """Skip clause generation
-    cgen = ClauseGenerator(lang=lang, atoms=atoms, terms=terms, bk=bk, clauses_bk=clauses_bk, \
+    cgen = ClauseGenerator(lang=lang, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses, \
                            pos_data_loader=train_pos_loader, mode_declarations=mode_declarations, device=device)
     #mode_declarations = None
-    #cgen = ClauseGenerator(args, CE, lang, val_pos_loader, mode_declarations, clauses_bk=clauses_bk, device=device, writer=writer)#torch.device('cpu'))
+    #cgen = ClauseGenerator(args, CE, lang, val_pos_loader, mode_declarations, bk_clauses=bk_clauses, device=device, writer=writer)#torch.device('cpu'))
     # generate clauses
     if args.pre_searched:
         clauses = get_searched_clauses(lark_path, lang_base_path, args.dataset_type, args.dataset)
@@ -235,7 +234,7 @@ def main(n):
     # update
     """
 
-    RGNN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, clauses_bk=clauses_bk,
+    RGNN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
                           program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
                           num_objects=args.num_objects, infer_step=args.infer_step, train=False)#train=not(args.no_train))
 
@@ -255,7 +254,7 @@ def main(n):
     # save the reasoning graph
 
     #print('check tensors.. ')
-    #te = TensorEncoder(lang, atoms, clauses+clauses_bk, device, RGNN.rgm)
+    #te = TensorEncoder(lang, atoms, clauses+bk_clauses, device, RGNN.rgm)
     #I = te.encode()
     # print(I.size())
     #print("TENSOR MEMORY: ", I.size(0) * I.size(1) * I.size(2) * I.size(3))

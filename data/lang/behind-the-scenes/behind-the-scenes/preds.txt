@@ -3,7 +3,7 @@ scene:1:colors
 scene_2:1:colors
 delete:3:color,colors,colors
 append:3:colors,colors,colors
-reverse:2:colors,colors
+reverse:3:colors,colors,colors
 sort:2:colors,colors
 get_color:3:colors,position,color
 first_obj:2:colors,color

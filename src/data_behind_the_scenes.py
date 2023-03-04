@@ -1,9 +1,10 @@
+import json
 import os
+
+import numpy as np
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
-import numpy as np
-import json
 from PIL import Image
 
 
@@ -33,7 +34,7 @@ class BehindTheScenes(torch.utils.data.Dataset):
         self.base = base
         self.lang = lang
         self.device = device
-        self.questions = load_question_json(question_json_path)[:100]
+        self.questions = load_question_json(question_json_path)
         self.img_size = img_size
         self.transform = transforms.Compose(
             [transforms.Resize((img_size, img_size))]

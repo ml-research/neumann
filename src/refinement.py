@@ -183,8 +183,6 @@ class RefinementGenerator(object):
         """
         refined_clauses = []
         #if (len(clause.body) >= self.max_body_len) or (len(clause.all_consts()) >= 1):
-        #    return []
-
         for z, dtype in clause.head.all_vars_and_dtypes():
             # for z in clause.all_vars():
             for f in self.lang.funcs:

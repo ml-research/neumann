@@ -29,13 +29,31 @@ class ClauseGenerator(object):
         print("Logits for the sampling: ")
         print(np.round(clause_scores.cpu().numpy(), 2))
         for i in range(clause_scores.size(0)):
-            selected_clause_indices = torch.stack([F.gumbel_softmax(clause_scores[i], tau=1.0, hard=True) for j in range(self.n_sample)])
-            selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
-            # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
-            clauses_to_refine_i = [c for i, c in enumerate(clauses) if selected_clause_indices[i] > 0]
-            clauses_to_refine.extend(clauses_to_refine_i)
-        clauses_to_refine = list(set(clauses_to_refine))
+            clauses_dic, scores_dic = self.split_by_head_preds(clauses, clause_scores[i])
+            for p, clauses_p in clauses_dic.items():
+                selected_clause_indices = torch.stack([F.gumbel_softmax(scores_dic[p], tau=1.0, hard=True) for j in range(int(self.n_sample / len(clauses_dic.keys())))])
+                selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
+                # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
+                clauses_to_refine_i = [c for i, c in enumerate(clauses_p) if selected_clause_indices[i] > 0]
+                clauses_to_refine.extend(clauses_to_refine_i)
+            clauses_to_refine = list(set(clauses_to_refine))
         return clauses_to_refine
+
+    def split_by_head_preds(self, clauses, clause_scores):
+        head_pred_clauses_dic = {}
+        head_pred_scores_dic = {}
+        for i, c in enumerate(clauses):
+            if c.head.pred in head_pred_clauses_dic:
+                head_pred_clauses_dic[c.head.pred].append(c)
+                head_pred_scores_dic[c.head.pred].append(clause_scores[i])
+            else:
+                head_pred_clauses_dic[c.head.pred] = [c]
+                head_pred_scores_dic[c.head.pred] = [clause_scores[i]]
+        
+        for p in head_pred_scores_dic.keys():
+            head_pred_scores_dic[p] = torch.tensor(head_pred_scores_dic[p])
+        return head_pred_clauses_dic, head_pred_scores_dic
+        
     
     def generate(self, clauses, clause_scores):
         clauses_to_refine = self.sample_clauses_by_scores(clauses, clause_scores)

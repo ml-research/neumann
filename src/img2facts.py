@@ -60,4 +60,4 @@ class Img2FactsWithQuery(nn.Module):
             zs_list.append(zs)
         zs = torch.cat(zs_list, dim=1)
         # zs: batch_size * num_images * num_objects * num_attributes
-        return self.fc(zs, query, self.atoms, self.bk)
+        return self.fc(zs, query)

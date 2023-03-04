@@ -11,3 +11,7 @@ smaller(gray,yellow).
 smaller(red,yellow).
 smaller(red,red).
 smaller(yellow,yellow).
+perm(*,*).
+sort(*,*).
+is_sorted(*).
+reverse(*,*,*).

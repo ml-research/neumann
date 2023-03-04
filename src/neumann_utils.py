@@ -25,7 +25,7 @@ from valuation import (SlotAttentionValuationModule,
 
 
 def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type):
-    if False: #os.path.exists('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)):
+    if os.path.exists('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)):
         with open('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset), 'rb') as f:
             RGM = pickle.load(f)
         print("Reasoning Graph loaded!")
@@ -35,10 +35,10 @@ def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, term_depth, de
         print("Saving the reasoning graph...")
         save_folder = 'model/reasoning_graph/'
         save_path = 'model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)
-        #if not os.path.exists(save_folder):
-        #    os.makedirs(save_folder)
-        #with open(save_path, 'wb') as f:
-        #    pickle.dump(RGM, f)
+        if not os.path.exists(save_folder):
+            os.makedirs(save_folder)
+        with open(save_path, 'wb') as f:
+            pickle.dump(RGM, f)
     return RGM
 
 def update_by_clauses(neumann, clauses, softmax_temp=1.0):
@@ -268,7 +268,7 @@ def get_behind_the_scenes_loader(question_json_path, batch_size, lang, device):
     )
     test_loader = torch.utils.data.DataLoader(
         dataset_test,
-        shuffle=False,
+        shuffle=True,
         batch_size=batch_size,
         num_workers=0
     )

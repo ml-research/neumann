@@ -56,7 +56,7 @@ def get_args():
                         help="The number of epochs.")
     parser.add_argument("--lr", type=float, default=1e-2,
                         help="The learning rate.")
-    parser.add_argument("--n-data", type=float, default=200,
+    parser.add_argument("--n-data", type=int, default=10000,
                         help="The number of data to be used.")
     parser.add_argument("--pre-searched", action="store_true",
                         help="Using pre searched clauses.")
@@ -86,6 +86,7 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
     target_list = []
     count = 0
 
+    start = time.time()
     for i, sample in tqdm(enumerate(loader, start=0)):
         imgs, query, target_set = map(lambda x: x.to(device), sample)
         
@@ -108,6 +109,7 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
                 imgs, captions, folder='result/kandinsky/' + args.dataset + '/' + split + '/', img_id_start=count, dataset=args.dataset)
         """
         count += V_T.size(0)  # batch size
+    reasoning_time = time.time() - start
 
     predicted = torch.cat(predicted_list, dim=0).detach().cpu().numpy()
     target_set = torch.cat(target_list, dim=0).to(
@@ -133,12 +135,12 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
         print('threshold: ', max_accuracy_threshold)
         print('recall: ', rec_score)
 
-        return max_accuracy, rec_score, max_accuracy_threshold
+        return max_accuracy, rec_score, max_accuracy_threshold, reasoning_time
     else:
         accuracy = accuracy_score(target_set, [m > th for m in predicted])
         rec_score = recall_score(
             target_set,  [m > th for m in predicted], average=None)
-        return accuracy, rec_score, th
+        return accuracy, rec_score, th, reasoning_time
 
 
 def to_one_label(ys, labels, th=0.7):
@@ -195,7 +197,7 @@ def main(n):
 
     # get torch data loader
     question_json_path = 'data/behind-the-scenes/BehindTheScenes_questions_{}.json'.format(args.dataset)
-    test_loader = get_behind_the_scenes_loader(question_json_path, args.batch_size, lang, device)
+    test_loader = get_behind_the_scenes_loader(question_json_path, args.batch_size, lang, args.n_data, device)
 
     NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
                           program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
@@ -221,13 +223,18 @@ def main(n):
     print('parameters: ', list(params))
 
     print("Predicting on test data set...")
+    times = []
     # test split
-    acc_test, rec_test, th_test = predict(
-        NEUMANN, I2F, test_loader, args, device, th=0.5, split='test')
+    for j in range(n):
+        acc_test, rec_test, th_test, time = predict(
+            NEUMANN, I2F, test_loader, args, device, th=0.5, split='test')
+        times.append(time)
+    
+    with open('out/time_{}_{}.txt'.format(args.dataset, args.n_data), 'w') as f:
+        f.write("\n".join(str(item) for item in times))
 
     print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
 
-
 if __name__ == "__main__":
-    for i in range(1):
-        main(n=i)
+    main(n=6)
+

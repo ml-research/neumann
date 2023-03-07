@@ -3,6 +3,7 @@ import itertools
 import torch
 
 from fol.logic_ops import subs, subs_list, unify
+from logic_utils import generate_substitutions
 
 
 class TensorEncoder(object):
@@ -28,13 +29,14 @@ class TensorEncoder(object):
         fact_index_dic ({atom -> int}): The dictionary that maps an atom to its index.
     """
 
-    def __init__(self, lang, facts, clauses, device, rgm):
+    def __init__(self, lang, facts, clauses, terms, max_term_depth, device):
         self.lang = lang
         self.facts = facts
+        self.terms = terms
         self.clauses = clauses
+        self.max_term_depth = max_term_depth
         print(clauses)
         self.device = device
-        self.rgm = rgm
         self.G = len(facts)
         self.C = len(clauses)
         # call before computing S and L
@@ -60,7 +62,7 @@ class TensorEncoder(object):
                     theta = self.head_unifier_dic[(clause.head, fact)]
                     clause_ = subs_list(clause, theta)
                     body = clause_.body
-                    theta_list = self.rgm.generate_subs(body)
+                    theta_list = generate_substitutions(body, self.terms, self.max_term_depth)
                     S_list.append(len(theta_list))
         return max(1, max(S_list))
 
@@ -163,7 +165,7 @@ class TensorEncoder(object):
             # the body has existentially quantified variable!!
             # e.g. body atoms: [in(img,O1),shape(O1,square)]
             # theta_list: [(O1,obj1), (O1,obj2)]
-            theta_list = self.rgm.generate_subs(body)
+            theta_list = generate_substitutions(body, self.terms, self.max_term_depth)
             n_substs = len(theta_list)
             assert n_substs <= self.S, 'Exceeded the maximum number of substitution patterns to existential variables: n_substs is: ' + \
                 str(n_substs) + ' but max num is: ' + str(self.S)

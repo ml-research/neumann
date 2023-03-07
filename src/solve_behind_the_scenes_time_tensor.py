@@ -12,12 +12,13 @@ from tqdm import tqdm
 from logic_utils import get_lang
 from mode_declaration import get_mode_declarations
 from neumann_utils import (get_behind_the_scenes_loader, get_clause_evaluator,
-                           get_model, get_prob)
+                           get_prob, get_tensor_model)
 from tensor_encoder import TensorEncoder
 
 # from nsfr_utils import save_images_with_captions, to_plot_images_clevr, generate_captions
 
 
+device_cpu = torch.device('cpu')
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -56,7 +57,7 @@ def get_args():
                         help="The number of epochs.")
     parser.add_argument("--lr", type=float, default=1e-2,
                         help="The learning rate.")
-    parser.add_argument("--n-data", type=float, default=200,
+    parser.add_argument("--n-data", type=int, default=10000,
                         help="The number of data to be used.")
     parser.add_argument("--pre-searched", action="store_true",
                         help="Using pre searched clauses.")
@@ -71,21 +72,26 @@ def get_args():
 # def get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False):
 
 
-def discretise_NEUMANN(NEUMANN, args, device):
+def discretise_NSFR(NSFR, args, device):
     lark_path = 'src/lark/exp.lark'
     lang_base_path = 'data/lang/'
     lang, clauses_, bk, terms, atoms = get_lang(
         lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
-    # Discretise NEUMANN rules
-    clauses = NEUMANN.get_clauses()
+    # Discretise NSFR rules
+    clauses = NSFR.get_clauses()
     return get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False)
 
+def to_cpu(x):
+    cpu = torch.device('cpu')
+    x.to(cpu)
+    return x
 
-def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
+def predict(NSFR, I2F, loader, args, device,  th=None, split='train'):
     predicted_list = []
     target_list = []
     count = 0
 
+    start = time.time()
     for i, sample in tqdm(enumerate(loader, start=0)):
         imgs, query, target_set = map(lambda x: x.to(device), sample)
         
@@ -93,8 +99,9 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
         target_set = target_set.float()
 
         V_0 = I2F(imgs, query)
-        V_T = NEUMANN(V_0)
-        predicted = get_prob(V_T, NEUMANN, args)
+        # V_T = NSFR(V_0)
+        V_T = NSFR(to_cpu(V_0))
+        predicted = get_prob(V_T, NSFR, args)
         predicted = to_one_label(predicted, target_set)
         predicted = torch.softmax(predicted * 10, dim=1)
         predicted_list.append(predicted.detach())
@@ -103,11 +110,12 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
         if args.plot:
             imgs = to_plot_images_clevr(imgs.squeeze(1))
             captions = generate_captions(
-                V_T, NEUMANN.atoms, I2F.pm.e, th=0.3)
+                V_T, NSFR.atoms, I2F.pm.e, th=0.3)
             save_images_with_captions(
                 imgs, captions, folder='result/kandinsky/' + args.dataset + '/' + split + '/', img_id_start=count, dataset=args.dataset)
         """
         count += V_T.size(0)  # batch size
+    reasoning_time = time.time() - start
 
     predicted = torch.cat(predicted_list, dim=0).detach().cpu().numpy()
     target_set = torch.cat(target_list, dim=0).to(
@@ -133,12 +141,12 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
         print('threshold: ', max_accuracy_threshold)
         print('recall: ', rec_score)
 
-        return max_accuracy, rec_score, max_accuracy_threshold
+        return max_accuracy, rec_score, max_accuracy_threshold, reasoning_time
     else:
         accuracy = accuracy_score(target_set, [m > th for m in predicted])
         rec_score = recall_score(
             target_set,  [m > th for m in predicted], average=None)
-        return accuracy, rec_score, th
+        return accuracy, rec_score, th, reasoning_time
 
 
 def to_one_label(ys, labels, th=0.7):
@@ -195,39 +203,28 @@ def main(n):
 
     # get torch data loader
     question_json_path = 'data/behind-the-scenes/BehindTheScenes_questions_{}.json'.format(args.dataset)
-    test_loader = get_behind_the_scenes_loader(question_json_path, args.batch_size, lang, device)
+    test_loader = get_behind_the_scenes_loader(question_json_path, args.batch_size, lang, args.n_data, device)
 
-    NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
+    NSFR, I2F = get_tensor_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
                           program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
                           num_objects=args.num_objects, infer_step=args.infer_step, train=False)#train=not(args.no_train))
 
-    writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
-    writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))
-    num_nodes = len(NEUMANN.rgm.atom_node_idxs) + len(NEUMANN.rgm.conj_node_idxs)
-    writer.add_scalar("graph/num_nodes", num_nodes)
-
-    num_edges = NEUMANN.rgm.edge_index.size(1)
-    writer.add_scalar("graph/num_edges", num_edges)
-
-    writer.add_scalar("graph/memory_total", num_nodes + num_edges)
-
-    print("=====================")
-    print("NUM NODES: ", num_nodes)
-    print("NUM EDGES: ", num_edges)
-    print("MEMORY TOTAL: ", num_nodes + num_edges)
-    print("=====================")
-
-    params = list(NEUMANN.parameters())
-    print('parameters: ', list(params))
+    # params = list(NSFR.parameters())
+    # print('parameters: ', list(params))
 
     print("Predicting on test data set...")
+    times = []
     # test split
-    acc_test, rec_test, th_test = predict(
-        NEUMANN, I2F, test_loader, args, device, th=0.5, split='test')
+    for j in range(n):
+        acc_test, rec_test, th_test, time = predict(
+            NSFR, I2F, test_loader, args, device, th=0.5, split='test')
+        times.append(time)
+    
+    with open('out/time_{}_{}_tensor.txt'.format(args.dataset, args.n_data), 'w') as f:
+        f.write("\n".join(str(item) for item in times))
 
     print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
 
-
 if __name__ == "__main__":
-    for i in range(1):
-        main(n=i)
+    main(n=6)
+

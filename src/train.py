@@ -334,31 +334,22 @@ def main(n):
     clause_scores = torch.ones((args.program_size, len(NEUMANN.clauses, ))).to(device)
 
     #too_simple_clauses = clauses
+    times = []
     while trial < args.trial:
         print("=====TRIAL: {}====".format(trial))
 
         epochs = args.trial_epochs
         pos_ratio = 1.0
-        #neg_ratio =  min(0.2*(trial+1), 1.0)
-        neg_ratio = 0.1
+        neg_ratio =  min(0.2*(trial+1), 1.0)
+        # neg_ratio = 0.1
         softmax_temp = 1.0
         lr = 1e-2
-        """
-        else:
-            epochs = 50
-            pos_ratio = 1.0
-            neg_ratio = 1.0
-            softmax_temp = 1e-2
-            lr =  1e-2 * pow(0.1, min(trial, 3))
-            # pruned_clauses = [c for c in NEUMANN.clauses if not c in too_simple_clauses]
-        """
         print('lr={}'.format(lr))
 
-        #import inspect
-        #print(inspect.getmembers(NEUMANN))
         print(NEUMANN.clauses)
         # Get torch data loader
         train_loader, val_loader,  test_loader = get_data_loader(args, device, pos_ratio, neg_ratio)
+        start = time.time()
         NEUMANN, new_gen_clauses = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp)
         # clause_generator.print_tree()
         params = list(NEUMANN.parameters())
@@ -367,9 +358,12 @@ def main(n):
         optimizer.zero_grad()
         loss_list, clause_scores = train_neumann(args, NEUMANN, I2F, optimizer, train_loader,
                                   val_loader, test_loader, device, writer, rtpt, epochs=epochs, trial=trial)
+        times.appned(time.time() - start)
         trial += 1
-        #NEUMANN.print_program()
         
+    
+    with open('out/learning_time_neumann_{}_{}.txt'.format(args.dataset, args.seed), 'w') as f:
+        f.write("\n".join(str(item) for item in times))
     epochs = args.epochs
     # for delete:
     # pos_ratio = 0.1
@@ -387,8 +381,6 @@ def main(n):
     NEUMANN = update_by_clauses(NEUMANN, generated_clauses)
     # Get torch data loader
     train_loader, val_loader,  test_loader = get_data_loader(args, device, pos_ratio, neg_ratio)
-    # NEUMANN = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp)
-    #NEUMANN.init_random_weights(args.program_size, NEUMANN.clauses, device)
     params = list(NEUMANN.parameters())
     optimizer = torch.optim.RMSprop(params, lr=lr)
     # optimizer = torch.optim.SGD(params, lr=lr)

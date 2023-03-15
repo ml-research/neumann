@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
+from sklearn.manifold import TSNE
+
 
 def plot_atoms(x_atom, atoms, path):
     x_atom = x_atom.detach().cpu().numpy()
@@ -63,7 +63,7 @@ def plot_reasoning_graph(path, reasoning_graph_module):
     #pp = PdfPages(path)
 
     G = reasoning_graph_module.networkx_graph
-    fig = plt.figure(1, figsize=(60, 60))
+    fig = plt.figure(1, figsize=(30, 30))
 
     first_partition_nodes = list(range(len(reasoning_graph_module.facts)))
     edges = G.edges()
@@ -86,5 +86,6 @@ def plot_reasoning_graph(path, reasoning_graph_module):
 
     plt.show()
     plt.savefig(path)
+    plt.close()
     #pp.savefig(fig)
     #pp.close()

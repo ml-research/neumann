@@ -1,9 +1,11 @@
+import json
 import os
+import random
+
+import numpy as np
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
-import numpy as np
-import json
 from PIL import Image
 
 
@@ -19,11 +21,12 @@ def load_image_clevr(path):
 def load_question_json(question_json_path):
     with open(question_json_path) as f:
         question = json.load(f)
-    questions = question["questions"]
-    return questions
+    #questions = question["questions"]
+    #return questions
+    return question
 
 class BehindTheScenes(torch.utils.data.Dataset):
-    def __init__(self, question_json_path, lang, device, img_size=128, base='data/behind-the-scenes/'):
+    def __init__(self, question_json_path, lang, n_data, device,  img_size=128, base='data/behind-the-scenes/'):
         super().__init__()
         #self.colors = ["cyan", "blue", "yellow",\
         #               "purple", "red", "green", "gray", "brown"]
@@ -33,7 +36,7 @@ class BehindTheScenes(torch.utils.data.Dataset):
         self.base = base
         self.lang = lang
         self.device = device
-        self.questions = load_question_json(question_json_path)[:100]
+        self.questions = random.sample(load_question_json(question_json_path), int(n_data))
         self.img_size = img_size
         self.transform = transforms.Compose(
             [transforms.Resize((img_size, img_size))]
@@ -46,7 +49,7 @@ class BehindTheScenes(torch.utils.data.Dataset):
 
     def __getitem__(self, item):
         question = self.questions[item]
-        print('question: ', question)
+        # print('question: ', question)
         image_path = self.base + 'images/' + question["image_filename"]
         image = Image.open(image_path).convert("RGB")
         image = self.image_preprocess(image)

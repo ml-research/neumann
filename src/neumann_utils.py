@@ -2,7 +2,9 @@ import os
 import pickle
 
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
+import torch.nn.functional as F
 
 import data_behind_the_scenes
 import data_clevr
@@ -10,12 +12,16 @@ import data_kandinsky
 import data_vilp
 from facts_converter import FactsConverter, FactsConverterWithQuery
 from img2facts import Img2Facts, Img2FactsWithQuery
+from infer import InferModule
+from logic_utils import add_true_atom
 from message_passing import MessagePassingModule
 from neumann import NEUMANN
+from nsfr import NSFReasoner
 from percept import (SlotAttentionLessColorsPerceptionModule,
                      SlotAttentionPerceptionModule, YOLOPerceptionModule)
 from reasoning_graph import ReasoningGraphModule
 from soft_logic import SoftLogic
+from tensor_encoder import TensorEncoder
 from valuation import (SlotAttentionValuationModule,
                        SlotAttentionWithQueryValuationModule,
                        YOLOValuationModule)
@@ -28,7 +34,7 @@ def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, term_depth, de
         print("Reasoning Graph loaded!")
     else:
         RGM = ReasoningGraphModule(clauses=clauses+bk_clauses, facts=atoms,
-                                   terms=terms, lang=lang, max_term_depth=term_depth, device=device, dataset_type=dataset_type)
+                                   terms=terms, lang=lang, max_term_depth=term_depth, device=device)
         print("Saving the reasoning graph...")
         save_folder = 'model/reasoning_graph/'
         save_path = 'model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)
@@ -38,6 +44,65 @@ def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, term_depth, de
             pickle.dump(RGM, f)
     return RGM
 
+def update_by_clauses(neumann, clauses, softmax_temp=1.0):
+    """Generate new neumann instance by generating and adding new clauses using clause scores.
+    """
+    ### Do we need old clauses?? too general clauses should be excluded
+
+    RGM = ReasoningGraphModule(clauses=clauses+neumann.bk_clauses, facts=neumann.atoms,
+                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device, clause_casche=neumann.rgm.clause_casche, grounding_casche=neumann.rgm.grounding_casche)
+    NEUM = NEUMANN(atoms=neumann.atoms, clauses=clauses, message_passing_module=neumann.mpm, reasoning_graph_module=RGM,
+                   bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
+    return NEUM
+
+def update_by_refinement(neumann, clause_scores, clause_generator, softmax_temp=1.0):
+    """Generate new neumann instance by generating and adding new clauses using clause scores.
+    """
+    generated_clauses = clause_generator.generate(neumann.clauses, clause_scores)
+    clause_generator.print_tree()
+    pruned_old_clauses = [c for c in neumann.clauses if not add_true_atom(c) in clause_generator.refinement_history]
+    ### Do we need old clauses?? too general clauses should be excluded
+    # new_clauses = sorted(list(set(neumann.clauses + new_gen_clauses)))
+    new_clauses = sorted(list(set(generated_clauses + pruned_old_clauses)))
+
+    RGM = ReasoningGraphModule(clauses=new_clauses + neumann.bk_clauses, facts=neumann.atoms,
+                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device)#, clause_casche=neumann.rgm.clause_casche, grounding_casche=neumann.rgm.grounding_casche)
+    NEUM = NEUMANN(atoms=neumann.atoms, clauses=new_clauses, message_passing_module=neumann.mpm, reasoning_graph_module=RGM,
+                   bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
+    return NEUM, generated_clauses
+
+def __update_by_refinement(neumann, clause_scores, refinement_generator, softmax_temp=1.0):
+    """Generate new neumann instance by generating and adding new clauses using clause scores.
+    """
+    clauses = neumann._preprocess_clauses(neumann.clauses)
+    #idxs = np.argsort(-clause_scores.cpu().numpy())
+    #print(clause_scores)
+    #print("==== CLAUSE SCORES ===")
+    #for i in idxs:
+    #    print(np.round(clause_scores[i].cpu().numpy(), 3), clauses[i])
+    print(clause_scores)
+    clauses_to_refine = []
+    for i in range(clause_scores.size(0)):
+        selected_clause_indices = torch.stack([F.gumbel_softmax(clause_scores[i], tau=1.0, hard=True) for j in range(5)])
+        selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
+        # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
+        clauses_to_refine_i = [c for i, c in enumerate(clauses) if selected_clause_indices[i] > 0]
+        clauses_to_refine.extend(clauses_to_refine_i)
+    clauses_to_refine = list(set(clauses_to_refine))
+    print('clauses_to_refine: ')
+    for c in clauses_to_refine:
+        print(c)
+    new_gen_clauses = neumann._preprocess_clauses(refinement_generator.refine_clauses(clauses_to_refine))
+    print("New Generated Clause: ", new_clauses)
+    print("clauses: ", clauses)
+    ### Do we need old clauses?? too general clauses should be excluded
+    new_clauses = sorted(list(set(clauses + new_gen_clauses)))
+
+    RGM = ReasoningGraphModule(clauses=new_clauses+neumann.bk_clauses, facts=neumann.atoms,
+                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device)
+    NEUM = NEUMANN(atoms=neumann.atoms, clauses=new_clauses, message_passing_module=neumann.mpm, reasoning_graph_module=RGM,
+                   bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
+    return NEUM, new_gen_clauses
 
 
 
@@ -92,6 +157,66 @@ def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device,
                    bk=bk, bk_clauses=bk_clauses, device=device, program_size=program_size, train=train)
     return NEUM, I2F
 
+def get_tensor_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device, dataset, dataset_type, num_objects, term_depth=3, infer_step=10, train=False):
+    if dataset_type in ['synthetic']:
+        RGM = load_reasoning_graph(
+            clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type)
+        # node feature module
+        # build Reasoning GNN
+        soft_logic = SoftLogic()
+        # (in_channels=args.node_dim, out_channels=len(atoms)
+        MPM = MessagePassingModule(soft_logic, device, T=infer_step)
+        NEUM = NEUMANN(atoms=atoms, clauses=clauses, message_passing_module=MPM, reasoning_graph_module=RGM,
+                   bk=bk, bk_clauses=bk_clauses, device=device, program_size=program_size, train=train)
+        return NEUM
+    elif dataset_type in ['vilp', 'clevr-hans']:
+        print("Loading SlotAttention Perception Module...")
+        PM = SlotAttentionPerceptionModule(
+            e=num_objects, d=19, device=device).to(device)
+        VM = SlotAttentionValuationModule(lang=lang, device=device)
+        FC = FactsConverter(lang=lang, atoms=atoms, bk=bk, perception_module=PM,
+                        valuation_module=VM, device=device)
+        I2F = Img2Facts(perception_module=PM, facts_converter=FC,
+                        atoms=atoms, bk=bk, device=device)
+    elif dataset_type in ['behind-the-scenes']:
+        print("Loading SlotAttention Perception Module...")
+        PM = SlotAttentionLessColorsPerceptionModule(
+            e=num_objects, d=19, device=device).to(device)
+        VM = SlotAttentionWithQueryValuationModule(lang=lang, device=device)
+        FC = FactsConverterWithQuery(lang=lang, atoms=atoms, bk=bk, perception_module=PM,
+                        valuation_module=VM, device=device)
+        I2F = Img2FactsWithQuery(perception_module=PM, facts_converter=FC,
+                        atoms=atoms, bk=bk, device=device)
+    else:
+        print("Loading YOLO Perception Module...")
+        PM = YOLOPerceptionModule(e=num_objects, d=11, device=device)
+        VM = YOLOValuationModule(lang=lang, device=device, dataset=dataset)
+        FC = FactsConverter(lang=lang, perception_module=PM,
+                        valuation_module=VM, device=device)
+        I2F = Img2Facts(perception_module=PM, facts_converter=FC,
+                        atoms=atoms, bk=bk, device=device)
+    # build reasoning graph
+    # RGM = ReasoningGraphModule(clauses=clauses+bk_clauses, facts=atoms, terms=terms, lang=lang, device=device)
+    RGM = load_reasoning_graph(
+        clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type)
+    # node feature module
+    # build Reasoning GNN
+    soft_logic = SoftLogic()
+    # (in_channels=args.node_dim, out_channels=len(atoms)
+    MPM = MessagePassingModule(soft_logic, device, T=infer_step)
+    print('Building index tensors ...')
+    device = torch.device('cpu')
+    te = TensorEncoder(lang, atoms, clauses, terms=terms, max_term_depth=term_depth, device=device)
+    I = te.encode()
+    I.to(device)
+    te_bk = TensorEncoder(lang, atoms, bk_clauses, terms=terms, max_term_depth=term_depth, device=device)
+    I_bk = te_bk.encode()
+    I_bk.to(device)
+    print("Index tensor I has been built!: ", I.size())
+    print("Index tensor I_bk has been built!: ", I_bk.size())
+    IM = InferModule(I=I, m=program_size, infer_step=infer_step, I_bk=I_bk, device=device)
+    NSFR = NSFReasoner(PM, FC, IM, IM, atoms, bk, clauses, train=False)
+    return NSFR, I2F
 
 def __get_img2fact(lang, atoms, bk, device):
     PM = SlotAttentionPerceptionModule(e=5, d=19, device=device)
@@ -154,13 +279,13 @@ def get_prob(v_T, Reasoner, args):
         assert 0, "Invalid dataset for get_prob: {}".format(args.dataset_type)
 
 
-def get_data_loader(args, device):
+def get_data_loader(args, device, pos_ratio=1.0, neg_ratio=1.0):
     if args.dataset_type == 'kandinsky':
         return get_kandinsky_loader(args)
     elif args.dataset_type == 'clevr-hans':
         return get_clevr_loader(args)
     elif args.dataset_type == 'vilp':
-        return get_vilp_loader(args)
+        return get_vilp_loader(args, pos_ratio, neg_ratio)
     elif args.dataset_type == 'behind-the-scenes':
         return get_behind_the_scenes_loader(args, device)
     else:
@@ -200,13 +325,13 @@ def get_kandinsky_loader(args, shuffle=False):
     return train_loader, val_loader, test_loader
 
 
-def get_behind_the_scenes_loader(question_json_path, batch_size, lang, device):
+def get_behind_the_scenes_loader(question_json_path, batch_size, lang, n_data, device):
     dataset_test = data_behind_the_scenes.BehindTheScenes(
-        question_json_path, lang, device
+        question_json_path, lang, n_data, device
     )
     test_loader = torch.utils.data.DataLoader(
         dataset_test,
-        shuffle=False,
+        shuffle=True,
         batch_size=batch_size,
         num_workers=0
     )
@@ -246,9 +371,9 @@ def get_clevr_loader(args):
     return train_loader, val_loader, test_loader
 
 
-def get_vilp_loader(args):
+def get_vilp_loader(args, pos_ratio, neg_ratio):
     dataset_train = data_vilp.VisualILP(
-        args.dataset, 'train'
+        args.dataset, 'train', pos_ratio=pos_ratio, neg_ratio=neg_ratio
     )
     dataset_val = data_vilp.VisualILP(
         args.dataset, 'val'
@@ -278,6 +403,37 @@ def get_vilp_loader(args):
 
     return train_loader, val_loader, test_loader
 
+def get_vilp_positive_loader(args, pos_ratio, neg_ratio):
+    dataset_train = data_vilp.VisualILP_POSITIVE(
+        args.dataset, 'train', pos_ratio=pos_ratio, neg_ratio=neg_ratio
+    )
+    dataset_val = data_vilp.VisualILP_POSITIVE(
+        args.dataset, 'val'
+    )
+    dataset_test = data_vilp.VisualILP_POSITIVE(
+        args.dataset, 'test'
+    )
+
+    train_loader = torch.utils.data.DataLoader(
+        dataset_train,
+        shuffle=True,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+    val_loader = torch.utils.data.DataLoader(
+        dataset_val,
+        shuffle=False,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+    test_loader = torch.utils.data.DataLoader(
+        dataset_test,
+        shuffle=False,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+
+    return train_loader, val_loader, test_loader
 
 def save_images_with_captions(imgs, captions, folder, img_id_start, dataset):
     if not os.path.exists(folder):

@@ -146,6 +146,42 @@ def get_mode_declarations_kandinsky(lang, obj_num):
     ]
     return modeb_list
 
+def get_mode_declarations_vilp(lang, dataset):
+    p_colors = ModeTerm('+', DataType('colors'))
+    p_color = ModeTerm('+', DataType('color'))
+    # modeh_1 = ModeDeclaration('head', 'kp', p_image)
+    if dataset=='member':
+        modeb_list = [
+            ModeDeclaration('body', 1, lang.get_pred_by_name(
+            'member'), [p_color, p_colors])]
+    elif dataset == 'delete':
+        modeb_list = [
+        ModeDeclaration('body', 1, lang.get_pred_by_name(
+            'delete'), [p_color, p_colors, p_colors])]
+    elif dataset == 'append':
+        modeb_list = [
+        ModeDeclaration('body', 1, lang.get_pred_by_name(
+            'append'), [p_colors, p_colors, p_colors])]
+    elif dataset == 'reverse':
+        modeb_list = [
+        ModeDeclaration('body', 1, lang.get_pred_by_name(
+            'reverse'), [p_colors, p_colors, p_colors])
+        #ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #    'append'), [p_colors, p_colors, p_colors]),
+            ]
+    elif dataset == 'sort':
+        modeb_list = [
+        ModeDeclaration('body', 1, lang.get_pred_by_name('perm'), [p_colors, p_colors]),
+        ModeDeclaration('body', 1, lang.get_pred_by_name('is_sorted'), [p_colors]),
+        ModeDeclaration('body', 1, lang.get_pred_by_name('smaller'), [p_color, p_color]),
+        ]
+        #ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #    'append'), [p_colors, p_colors, p_colors]),
+        #ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #    'reverse'), [p_colors, p_colors]),
+        #ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #    'sort'), [p_colors, p_colors])
+    return modeb_list
 
 def get_mode_declarations(args, lang, obj_num):
     if args.dataset_type == 'kandinsky':

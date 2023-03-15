@@ -1,23 +1,22 @@
 import argparse
+import pickle
 import time
 
 import numpy as np
-from sklearn.metrics import accuracy_score, recall_score, roc_curve
-
 import torch
-
-import pickle
-
+from rtpt import RTPT
+from sklearn.metrics import accuracy_score, recall_score, roc_curve
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-from rtpt import RTPT
 
-from neumann_utils import get_model, get_prob, get_behind_the_scenes_loader, get_clause_evaluator
 from logic_utils import get_lang
 from mode_declaration import get_mode_declarations
+from neumann_utils import (get_behind_the_scenes_loader, get_clause_evaluator,
+                           get_model, get_prob)
+from tensor_encoder import TensorEncoder
+
 # from nsfr_utils import save_images_with_captions, to_plot_images_clevr, generate_captions
 
-from tensor_encoder import TensorEncoder
 
 
 def get_args():
@@ -28,7 +27,7 @@ def get_args():
                         default=1, help="Batch size in beam search")
     parser.add_argument("--num-objects", type=int, default=3,
                         help="The maximum number of objects in one image")
-    parser.add_argument("--dataset", default="behind-the-scenes")  # , choices=["member"])
+    parser.add_argument("--dataset", default="delete")  # , choices=["member"])
     parser.add_argument("--dataset-type", default="behind-the-scenes")
     parser.add_argument('--device', default='cpu',
                         help='cuda device, i.e. 0 or cpu')
@@ -61,7 +60,7 @@ def get_args():
                         help="The number of data to be used.")
     parser.add_argument("--pre-searched", action="store_true",
                         help="Using pre searched clauses.")
-    parser.add_argument("--infer-step", type=int, default=3,
+    parser.add_argument("--infer-step", type=int, default=6,
                         help="The number of steps of forward reasoning.")
     parser.add_argument("--term-depth", type=int, default=3,
                         help="The number of steps of forward reasoning.")
@@ -69,25 +68,23 @@ def get_args():
     args = parser.parse_args()
     return args
 
-# def get_nsfr_model(args, lang, clauses, atoms, bk, clauses_bk, device, train=False):
+# def get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False):
 
 
-def discretise_NSFR(NSFR, args, device):
+def discretise_NEUMANN(NEUMANN, args, device):
     lark_path = 'src/lark/exp.lark'
     lang_base_path = 'data/lang/'
     lang, clauses_, bk, terms, atoms = get_lang(
         lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
-    # Discretise NSFR rules
-    clauses = NSFR.get_clauses()
-    return get_nsfr_model(args, lang, clauses, atoms, bk, clauses_bk, device, train=False)
+    # Discretise NEUMANN rules
+    clauses = NEUMANN.get_clauses()
+    return get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False)
 
 
-def predict(NSFR, I2F, loader, args, device,  th=None, split='train'):
+def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
     predicted_list = []
     target_list = []
     count = 0
-    ###NSFR = discretise_NSFR(NSFR, args, device)
-    # NSFR.print_program()
 
     for i, sample in tqdm(enumerate(loader, start=0)):
         imgs, query, target_set = map(lambda x: x.to(device), sample)
@@ -95,44 +92,26 @@ def predict(NSFR, I2F, loader, args, device,  th=None, split='train'):
         # to cuda
         target_set = target_set.float()
 
-        # infer and predict the target probability
-
-        # parceive the objects from the input scenes
         V_0 = I2F(imgs, query)
-        # add question information 
-        # V_0 = add_question_info(V_0, query)
-
-        V_T = NSFR(V_0)
-        NSFR.print_valuation_batch(V_T)
-        predicted = get_prob(V_T, NSFR, args)
-        print('predicted: ', predicted)
+        V_T = NEUMANN(V_0)
+        predicted = get_prob(V_T, NEUMANN, args)
         predicted = to_one_label(predicted, target_set)
-        #print('predicted_one: ', predicted)
         predicted = torch.softmax(predicted * 10, dim=1)
-        print('predicted: ', np.round(predicted.cpu().detach().numpy(), 2))
-        print('target: ', target_set)
-        # NSFR.print_valuation_batch(V_T)
-        if predicted[0].sum() > 1.5:
-            print(i, predicted)
         predicted_list.append(predicted.detach())
         target_list.append(target_set.detach())
+        """
         if args.plot:
             imgs = to_plot_images_clevr(imgs.squeeze(1))
             captions = generate_captions(
-                V_T, NSFR.atoms, I2F.pm.e, th=0.3)
+                V_T, NEUMANN.atoms, I2F.pm.e, th=0.3)
             save_images_with_captions(
                 imgs, captions, folder='result/kandinsky/' + args.dataset + '/' + split + '/', img_id_start=count, dataset=args.dataset)
+        """
         count += V_T.size(0)  # batch size
-        #
-        # NSFR.print_valuation_batch(V_T)
 
     predicted = torch.cat(predicted_list, dim=0).detach().cpu().numpy()
     target_set = torch.cat(target_list, dim=0).to(
         torch.int64).detach().cpu().numpy()
-    # predicted = to_one_label(predicted, target_set)
-
-    # print('predicted: ', predicted)
-    # print('label    : ', target_set)
 
     if th == None:
         fpr, tpr, thresholds = roc_curve(target_set, predicted, pos_label=1)
@@ -209,91 +188,44 @@ def main(n):
     # load logical representations
     lark_path = 'src/lark/exp.lark'
     lang_base_path = 'data/lang/'
-    lang, clauses, bk, clauses_bk, terms, atoms = get_lang(
+    lang, clauses, bk, bk_clauses, terms, atoms = get_lang(
         lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
 
     print("{} Atoms:".format(len(atoms)))
 
-    # get torch data loader
-    test_loader = get_behind_the_scenes_loader(args.question_json_path, args.batch_size, lang, device)
-
-    # Neuro-Symbolic Forward Reasoner for clause generation
-    # CE = get_clause_evaluator(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, clauses_bk=clauses_bk, device=device)#torch.device('cpu'))
-    ###mode_declarations = get_mode_declarations(dataset=args.dataset, lang=lang)
-
-    """Skip clause generation
-    cgen = ClauseGenerator(lang=lang, atoms=atoms, terms=terms, bk=bk, clauses_bk=clauses_bk, \
-                           pos_data_loader=train_pos_loader, mode_declarations=mode_declarations, device=device)
-    #mode_declarations = None
-    #cgen = ClauseGenerator(args, CE, lang, val_pos_loader, mode_declarations, clauses_bk=clauses_bk, device=device, writer=writer)#torch.device('cpu'))
-    # generate clauses
-    if args.pre_searched:
-        clauses = get_searched_clauses(lark_path, lang_base_path, args.dataset_type, args.dataset)
-    else:
-        clauses = cgen.generate(clauses, T_beam=args.t_beam, N_beam=args.n_beam, N_max=args.n_max)
-    print("====== ", len(clauses), " clauses are generated!! ======")
-    # update
-    """
-
-    RGNN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, clauses_bk=clauses_bk,
+    NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
                           program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
                           num_objects=args.num_objects, infer_step=args.infer_step, train=False)#train=not(args.no_train))
+    print(NEUMANN.rgm)
+    # get torch data loader
+    question_json_path = 'data/behind-the-scenes/BehindTheScenes_questions_{}.json'.format(args.dataset)
+    test_loader = get_behind_the_scenes_loader(question_json_path, args.batch_size, lang, device)
 
-    writer.add_scalar("graph/num_atom_nodes", len(RGNN.rgm.atom_node_idxs))
-    writer.add_scalar("graph/num_conj_nodes", len(RGNN.rgm.conj_node_idxs))
-    num_nodes = len(RGNN.rgm.atom_node_idxs) + len(RGNN.rgm.conj_node_idxs)
+
+    writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
+    writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))
+    num_nodes = len(NEUMANN.rgm.atom_node_idxs) + len(NEUMANN.rgm.conj_node_idxs)
     writer.add_scalar("graph/num_nodes", num_nodes)
 
-    num_edges = RGNN.rgm.edge_index.size(1)
+    num_edges = NEUMANN.rgm.edge_index.size(1)
     writer.add_scalar("graph/num_edges", num_edges)
 
     writer.add_scalar("graph/memory_total", num_nodes + num_edges)
 
+    print("=====================")
     print("NUM NODES: ", num_nodes)
     print("NUM EDGES: ", num_edges)
     print("MEMORY TOTAL: ", num_nodes + num_edges)
-    # save the reasoning graph
+    print("=====================")
 
-    #print('check tensors.. ')
-    #te = TensorEncoder(lang, atoms, clauses+clauses_bk, device, RGNN.rgm)
-    #I = te.encode()
-    # print(I.size())
-    #print("TENSOR MEMORY: ", I.size(0) * I.size(1) * I.size(2) * I.size(3))
-    #
-    # perception part: image2fact
-    ## I2F = get_img2fact(lang=lang, atoms=atoms, bk=bk, device=device)
-
-    params = list(RGNN.parameters())
+    params = list(NEUMANN.parameters())
     print('parameters: ', list(params))
-
-    #if not args.no_train:
-    #    optimizer = torch.optim.RMSprop(params, lr=args.lr)
-    #    ## optimizer = torch.optim.Adam(params, lr=args.lr)
-    #    loss_list = train_nsfr(args, RGNN, I2F, optimizer, train_loader,
-    #                           val_loader, test_loader, device, writer, rtpt)
-
-    # validation split
-    #print("Predicting on validation data set...")
-    #acc_val, rec_val, th_val = predict(
-    #    RGNN, I2F, val_loader, args, device, th=0.7, split='val')
-
-    #print("ACC VAL: ", acc_val)
-
-    #print("Predicting on training data set...")
-    # training split
-    # acc, rec, th = predict(
-    #    RGNN, I2F, train_loader, args, device, th=th_val, split='train')
-    #print('ACC TRAIN: ', acc)
 
     print("Predicting on test data set...")
     # test split
     acc_test, rec_test, th_test = predict(
-        RGNN, I2F, test_loader, args, device, th=0.5, split='test')
+        NEUMANN, I2F, test_loader, args, device, th=0.5, split='test')
 
-    print("ACC TEST: ", acc_test)
-
-    #print("training acc: ", acc, "threashold: ", th, "recall: ", rec)
-    #print("val acc: ", acc_val, "threashold: ", th_val, "recall: ", rec_val)
     print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
 
 

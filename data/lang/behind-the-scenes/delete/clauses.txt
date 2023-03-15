@@ -1,0 +1,1 @@
+answer(X):-scene(Colors1),delete(Color,Colors1,Colors2),query3(q,q_delete,Color,Position),get_color(Colors2,Position,X).

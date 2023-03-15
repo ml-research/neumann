@@ -1,0 +1,10 @@
+answer:1:color
+scene:1:colors
+scene_2:1:colors
+delete:3:color,colors,colors
+get_color:3:colors,position,color
+first_obj:2:colors,color
+second_obj:2:colors,color
+third_obj:2:colors,color
+same_position:2:position,position
+chain:1:objects

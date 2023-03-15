@@ -27,6 +27,8 @@
     },
     "runArgs": [
         "--gpus",
-        "all"
+        "all",
+        "--shm-size",
+        "1000gb"
     ]
 }

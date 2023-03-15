@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 
 
-def load_images_and_labels(dataset='member', split='train', base=None):
+def load_images_and_labels(dataset='member', split='train', base=None, pos_ratio=1.0, neg_ratio=1.0):
     """Load image paths and labels for clevr-hans dataset.
     """
     image_paths_list = []
@@ -18,7 +18,7 @@ def load_images_and_labels(dataset='member', split='train', base=None):
         folder_names.remove('.DS_Store')
 
     if split == 'train':
-        n = int(len(folder_names)/2)
+        n = int(len(folder_names) * pos_ratio)
     else:
         n = len(folder_names)
     for folder_name in folder_names[:n]:
@@ -31,10 +31,14 @@ def load_images_and_labels(dataset='member', split='train', base=None):
         image_paths_list.append(image_paths)
         labels.append(1.0)
     base_folder = 'data/vilp/' + dataset + '/' + split + '/false/'
+    if split == 'train':
+        n = int(len(folder_names) * neg_ratio)
+    else:
+        n = len(folder_names)
     folder_names = sorted(os.listdir(base_folder))
     if '.DS_Store' in folder_names:
         folder_names.remove('.DS_Store')
-    for folder_name in folder_names:
+    for folder_name in folder_names[:n]:
         folder = base_folder + folder_name + '/'
         filenames = sorted(os.listdir(folder))
         image_paths = []
@@ -82,7 +86,7 @@ class VisualILP(torch.utils.data.Dataset):
     The implementations is mainly from https://github.com/ml-research/NeSyConceptLearner/blob/main/src/pretrain-slot-attention/data.py.
     """
 
-    def __init__(self, dataset, split, img_size=128, base=None):
+    def __init__(self, dataset, split, img_size=128, base=None, pos_ratio=1.0, neg_ratio=1.0):
         super().__init__()
         self.img_size = img_size
         self.dataset = dataset
@@ -95,8 +99,10 @@ class VisualILP(torch.utils.data.Dataset):
         self.transform = transforms.Compose(
             [transforms.Resize((img_size, img_size))]
         )
+        self.pos_ratio = pos_ratio
+        self.neg_ratio = neg_ratio
         self.image_paths, self.labels = load_images_and_labels(
-            dataset=dataset, split=split, base=base)
+            dataset=dataset, split=split, base=base, pos_ratio=pos_ratio, neg_ratio=neg_ratio)
 
     def __getitem__(self, item):
         paths = self.image_paths[item]

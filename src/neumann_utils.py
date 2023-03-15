@@ -66,7 +66,7 @@ def update_by_refinement(neumann, clause_scores, clause_generator, softmax_temp=
     new_clauses = sorted(list(set(generated_clauses + pruned_old_clauses)))
 
     RGM = ReasoningGraphModule(clauses=new_clauses + neumann.bk_clauses, facts=neumann.atoms,
-                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device, clause_casche=neumann.rgm.clause_casche, grounding_casche=neumann.rgm.grounding_casche)
+                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device)#, clause_casche=neumann.rgm.clause_casche, grounding_casche=neumann.rgm.grounding_casche)
     NEUM = NEUMANN(atoms=neumann.atoms, clauses=new_clauses, message_passing_module=neumann.mpm, reasoning_graph_module=RGM,
                    bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
     return NEUM, generated_clauses
@@ -403,6 +403,37 @@ def get_vilp_loader(args, pos_ratio, neg_ratio):
 
     return train_loader, val_loader, test_loader
 
+def get_vilp_positive_loader(args, pos_ratio, neg_ratio):
+    dataset_train = data_vilp.VisualILP_POSITIVE(
+        args.dataset, 'train', pos_ratio=pos_ratio, neg_ratio=neg_ratio
+    )
+    dataset_val = data_vilp.VisualILP_POSITIVE(
+        args.dataset, 'val'
+    )
+    dataset_test = data_vilp.VisualILP_POSITIVE(
+        args.dataset, 'test'
+    )
+
+    train_loader = torch.utils.data.DataLoader(
+        dataset_train,
+        shuffle=True,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+    val_loader = torch.utils.data.DataLoader(
+        dataset_val,
+        shuffle=False,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+    test_loader = torch.utils.data.DataLoader(
+        dataset_test,
+        shuffle=False,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
+
+    return train_loader, val_loader, test_loader
 
 def save_images_with_captions(imgs, captions, folder, img_id_start, dataset):
     if not os.path.exists(folder):

@@ -358,7 +358,7 @@ def main(n):
         optimizer.zero_grad()
         loss_list, clause_scores = train_neumann(args, NEUMANN, I2F, optimizer, train_loader,
                                   val_loader, test_loader, device, writer, rtpt, epochs=epochs, trial=trial)
-        times.appned(time.time() - start)
+        times.append(time.time() - start)
         trial += 1
         
     

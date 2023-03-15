@@ -193,13 +193,14 @@ def main(n):
 
     print("{} Atoms:".format(len(atoms)))
 
+    NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
+                          program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
+                          num_objects=args.num_objects, infer_step=args.infer_step, train=False)#train=not(args.no_train))
+    print(NEUMANN.rgm)
     # get torch data loader
     question_json_path = 'data/behind-the-scenes/BehindTheScenes_questions_{}.json'.format(args.dataset)
     test_loader = get_behind_the_scenes_loader(question_json_path, args.batch_size, lang, device)
 
-    NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
-                          program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
-                          num_objects=args.num_objects, infer_step=args.infer_step, train=False)#train=not(args.no_train))
 
     writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
     writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))

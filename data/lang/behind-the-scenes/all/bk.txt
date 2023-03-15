@@ -1,0 +1,17 @@
+same_position(1st,1st).
+same_position(2nd,2nd).
+same_position(3rd,3rd).
+smaller(cyan,cyan).
+smaller(cyan,gray).
+smaller(cyan,red).
+smaller(cyan,yellow).
+smaller(gray,gray).
+smaller(gray,red).
+smaller(gray,yellow).
+smaller(red,yellow).
+smaller(red,red).
+smaller(yellow,yellow).
+perm(*,*).
+sort(*,*).
+is_sorted(*).
+reverse(*,*,*).

@@ -106,7 +106,7 @@ def __update_by_refinement(neumann, clause_scores, refinement_generator, softmax
 
 
 
-def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device, dataset, dataset_type, num_objects, term_depth=6, infer_step=10, train=False):
+def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device, dataset, dataset_type, num_objects, term_depth=6, infer_step=10, train=False, explain=False):
     if dataset_type in ['synthetic']:
         RGM = load_reasoning_graph(
             clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type)
@@ -153,7 +153,7 @@ def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device,
     # (in_channels=args.node_dim, out_channels=len(atoms)
     MPM = MessagePassingModule(soft_logic, device, T=infer_step)
     NEUM = NEUMANN(atoms=atoms, clauses=clauses, message_passing_module=MPM, reasoning_graph_module=RGM,
-                   bk=bk, bk_clauses=bk_clauses, device=device, program_size=program_size, train=train)
+                   bk=bk, bk_clauses=bk_clauses, device=device, program_size=program_size, train=train, explain=explain)
     return NEUM, I2F
 
 def get_tensor_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device, dataset, dataset_type, num_objects, term_depth=3, infer_step=10, train=False):

@@ -1,11 +1,11 @@
 """
 Slot attention model based on code of tkipf and the corresponding paper Locatello et al. 2020
 """
-from torch import nn
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.models as models
-import numpy as np
+from torch import nn
 from torchsummary import summary
 
 
@@ -59,6 +59,8 @@ class SlotAttention(nn.Module):
             dots = torch.einsum('bid,bjd->bij', q, k) * self.scale
             attn = dots.softmax(dim=1) + self.eps
             attn = attn / attn.sum(dim=-1, keepdim=True)
+
+            self.attention_maps = attn
 
             updates = torch.einsum('bjd,bij->bid', v, attn)
 

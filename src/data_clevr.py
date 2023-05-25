@@ -1,12 +1,13 @@
 import os
+
+import numpy as np
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
-import numpy as np
 from PIL import Image
 
 
-def load_images_and_labels(dataset='clevr-hans3', split='train', base=None):
+def load_images_and_labels(dataset='clevr-hans3', split='train', n_ratio=1.0, base=None):
     """Load image paths and labels for clevr-hans dataset.
     """
     image_paths = []
@@ -17,46 +18,20 @@ def load_images_and_labels(dataset='clevr-hans3', split='train', base=None):
 
     filenames = sorted(os.listdir(true_folder))
     if split == 'train':
-        n = int(len(filenames)/10)
+        n = int(n_ratio * len(filenames)) #int(len(filenames)/10)
     else:
-        n = len(filenames)
+        n = int(n_ratio * len(filenames))
     for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(true_folder, filename))
             labels.append(1)
 
     filenames = sorted(os.listdir(false_folder))
-    for filename in filenames:
+    n = int(n_ratio * len(filenames))
+    for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(false_folder, filename))
             labels.append(0)
-    return image_paths, labels
-
-def __load_images_and_labels(dataset='clevr-hans3', split='train', base=None):
-    """Load image paths and labels for clevr-hans dataset.
-    """
-    image_paths = []
-    labels = []
-    if base == None:
-        base_folder = 'data/clevr-hans/' + dataset + '/' + split + '/'
-    else:
-        base_folder = base + '/data/clevr-hans/' + dataset + '/' + split + '/'
-    if dataset == 'clevr-hans3':
-        for i, cl in enumerate(['class0', 'class1', 'class2']):
-            folder = base_folder + cl + '/'
-            filenames = sorted(os.listdir(folder))
-            for filename in filenames:
-                if filename != '.DS_Store':
-                    image_paths.append(os.path.join(folder, filename))
-                    labels.append(i)
-    elif dataset == 'clevr-hans7':
-        for i, cl in enumerate(['class0', 'class1', 'class2', 'class3', 'class4', 'class5', 'class6']):
-            folder = base_folder + cl + '/'
-            filenames = sorted(os.listdir(folder))
-            for filename in filenames:
-                if filename != '.DS_Store':
-                    image_paths.append(os.path.join(folder, filename))
-                    labels.append(i)
     return image_paths, labels
 
 
@@ -76,7 +51,7 @@ class CLEVRHans(torch.utils.data.Dataset):
     The implementations is mainly from https://github.com/ml-research/NeSyConceptLearner/blob/main/src/pretrain-slot-attention/data.py.
     """
 
-    def __init__(self, dataset, split, img_size=128, base=None):
+    def __init__(self, dataset, split, n_ratio=1.0, img_size=128, base=None):
         super().__init__()
         self.img_size = img_size
         self.dataset = dataset
@@ -90,7 +65,7 @@ class CLEVRHans(torch.utils.data.Dataset):
             [transforms.Resize((img_size, img_size))]
         )
         self.image_paths, self.labels = load_images_and_labels(
-            dataset=dataset, split=split)
+            dataset=dataset, split=split, n_ratio=n_ratio)
 
     def __getitem__(self, item):
         path = self.image_paths[item]
@@ -117,45 +92,6 @@ class CLEVRHans(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.labels)
-
-class __CLEVRHans(torch.utils.data.Dataset):
-    """CLEVRHans dataset. 
-    The implementations is mainly from https://github.com/ml-research/NeSyConceptLearner/blob/main/src/pretrain-slot-attention/data.py.
-    """
-
-    def __init__(self, dataset, split, img_size=128, base=None):
-        super().__init__()
-        self.img_size = img_size
-        self.dataset = dataset
-        assert split in {
-            "train",
-            "val",
-            "test",
-        }  # note: test isn't very useful since it doesn't have ground-truth scene information
-        self.split = split
-        self.transform = transforms.Compose(
-            [transforms.Resize((img_size, img_size))]
-        )
-        self.image_paths, self.labels = load_images_and_labels(
-            dataset=dataset, split=split, base=base)
-
-    def __getitem__(self, item):
-        path = self.image_paths[item]
-        image = Image.open(path).convert("RGB")
-        image = transforms.ToTensor()(image)[:3, :, :]
-        image = self.transform(image)
-        image = (image - 0.5) * 2.0  # Rescale to [-1, 1].
-        if self.dataset == 'clevr-hans3':
-            labels = torch.zeros((3, ), dtype=torch.float32)
-        elif self.dataset == 'clevr-hans7':
-            labels = torch.zeros((7, ), dtype=torch.float32)
-        labels[self.labels[item]] = 1.0
-        # return as one image, not two or more
-        return image.unsqueeze(0), labels
-
-    def __len__(self):
-        return len(self.labels)
-
 
 class CLEVRConcept(torch.utils.data.Dataset):
     """The Concept-learning dataset for CLEVR-Hans.

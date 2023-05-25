@@ -28,7 +28,7 @@ from valuation import (SlotAttentionValuationModule,
 
 
 def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type):
-    if os.path.exists('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)):
+    if False: # os.path.exists('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)):
         with open('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset), 'rb') as f:
             RGM = pickle.load(f)
         print("Reasoning Graph loaded!")
@@ -140,8 +140,7 @@ def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device,
         print("Loading YOLO Perception Module...")
         PM = YOLOPerceptionModule(e=num_objects, d=11, device=device)
         VM = YOLOValuationModule(lang=lang, device=device, dataset=dataset)
-        FC = FactsConverter(lang=lang, perception_module=PM,
-                        valuation_module=VM, device=device)
+        FC = FactsConverter(lang=lang,atoms=atoms, bk=bk, perception_module=PM, valuation_module=VM, device=device)
         I2F = Img2Facts(perception_module=PM, facts_converter=FC,
                         atoms=atoms, bk=bk, device=device)
     # build reasoning graph
@@ -267,7 +266,7 @@ def get_prob(v_T, Reasoner, args):
     elif args.dataset_type == 'vilp' and args.dataset in ['delete', 'append']:
         return Reasoner.predict_by_atom(v_T, 'pos(img1,img2,img3)')
     elif args.dataset_type in ['kandinsky', 'clevr-hans']:
-        return Reasoner.predict_by_atom(v_T, 'pos(img)')
+        return Reasoner.predict_by_atom(v_T, 'kp(img)')
     elif args.dataset_type in ['behind-the-scenes']:
         return torch.cat([Reasoner.predict_by_atom(v_T, 'answer(cyan)').unsqueeze(-1),
                          Reasoner.predict_by_atom(
@@ -294,13 +293,13 @@ def get_data_loader(args, device, pos_ratio=1.0, neg_ratio=1.0):
 
 def get_kandinsky_loader(args, shuffle=False):
     dataset_train = data_kandinsky.KANDINSKY(
-        args.dataset, 'train'
+        args.dataset, 'train', args.n_ratio
     )
     dataset_val = data_kandinsky.KANDINSKY(
-        args.dataset, 'val'
+        args.dataset, 'val', args.n_ratio
     )
     dataset_test = data_kandinsky.KANDINSKY(
-        args.dataset, 'test'
+        args.dataset, 'test', args.n_ratio
     )
 
     train_loader = torch.utils.data.DataLoader(
@@ -340,13 +339,13 @@ def get_behind_the_scenes_loader(question_json_path, batch_size, lang, n_data, d
 
 def get_clevr_loader(args):
     dataset_train = data_clevr.CLEVRHans(
-        args.dataset, 'train'
+        args.dataset, 'train', args.n_ratio
     )
     dataset_val = data_clevr.CLEVRHans(
-        args.dataset, 'val'
+        args.dataset, 'val', args.n_ratio
     )
     dataset_test = data_clevr.CLEVRHans(
-        args.dataset, 'test'
+        args.dataset, 'test', args.n_ratio
     )
 
     train_loader = torch.utils.data.DataLoader(

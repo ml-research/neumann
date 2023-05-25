@@ -258,9 +258,9 @@ class NEUMANN(nn.Module):
             idxs = np.argsort(-v)
             for i in idxs:
                 if v[i] > 0.2:
-                    if not self.atoms[i].pred.name in ['member', 'not_member', 'get_color', 'perm', 'delete', 'diff_color', 'right_most'] and\
+                    if not self.atoms[i].pred.name in ['member', 'not_member', 'get_color', 'perm', 'delete', 'right_most'] and\
                         not self.atoms[i].pred.name in ['first_obj', 'second_obj', 'third_obj', 'append',  'reverse'] and\
-                            not self.atoms[i].pred.name in ['left_of', 'same_position', 'smaller', 'color', 'chain']:
+                            not self.atoms[i].pred.name in ['left_of', 'same_position', 'smaller', 'chain']:
                         print(i, self.atoms[i], ': ', round(v[i], 3))
 
     def print_trace_batch(self, valuation_list, n=40):
@@ -305,3 +305,24 @@ class NEUMANN(nn.Module):
         for atom in atoms:
             text += str(atom) + ', '
         return text
+    
+    def to_clingo_text_batch(self, V_0):
+        text_list = []
+        for v in V_0:
+            text = ''
+            for clause in self.clauses + self.bk_clauses:
+                text += str(clause)
+                text += ' '
+            for i, atom in enumerate(self.atoms):
+                if v[i] > 0.5 and not str(atom) == '.(__T__)':
+                    text += str(atom)
+                    text += '. '
+                    #t ext += '.\n'
+            text_list.append(text)
+        return text_list
+              
+
+
+
+
+

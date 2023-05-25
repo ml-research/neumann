@@ -1,16 +1,17 @@
 import os
+
 import cv2
+import numpy as np
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
-import numpy as np
 
 
 class KANDINSKY(torch.utils.data.Dataset):
     """Kandinsky Patterns dataset.
     """
 
-    def __init__(self, dataset, split, img_size=128):
+    def __init__(self, dataset, split, n_ratio=1.0, img_size=128):
         self.img_size = img_size
         assert split in {
             "train",
@@ -18,7 +19,8 @@ class KANDINSKY(torch.utils.data.Dataset):
             "test",
         }
         self.image_paths, self.labels = load_images_and_labels(
-            dataset=dataset, split=split)
+            dataset=dataset, split=split,  n_ratio=n_ratio)
+        print("{} {} images loaded!!".format(len(self.image_paths), split))
 
     def __getitem__(self, item):
         image = load_image_yolo(
@@ -26,6 +28,7 @@ class KANDINSKY(torch.utils.data.Dataset):
         image = torch.from_numpy(image).type(torch.float32) / 255.
 
         label = torch.tensor(self.labels[item], dtype=torch.float32)
+
         # return image as one image, not two or more
         return image.unsqueeze(0), label
 
@@ -33,7 +36,7 @@ class KANDINSKY(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def load_images_and_labels(dataset='twopairs', split='train', img_size=128):
+def load_images_and_labels(dataset='twopairs', split='train', n_ratio=1.0, img_size=128):
     """Load image paths and labels for kandinsky dataset.
     """
     image_paths = []
@@ -43,17 +46,19 @@ def load_images_and_labels(dataset='twopairs', split='train', img_size=128):
     false_folder = folder + 'false/'
 
     filenames = sorted(os.listdir(true_folder))
-    if split == 'train':
-        n = int(len(filenames)/10)
-    else:
-        n = len(filenames)
+    #if split == 'train':
+    #    n = int(len(filenames)/10)
+    #else:
+    #    n = len(filenames)
+    n = int(n_ratio * len(filenames))
     for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(true_folder, filename))
             labels.append(1)
 
     filenames = sorted(os.listdir(false_folder))
-    for filename in filenames:
+    n = int(n_ratio * len(filenames))
+    for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(false_folder, filename))
             labels.append(0)

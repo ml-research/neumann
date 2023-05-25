@@ -4,17 +4,20 @@ Usage:
     $ python path/to/models/yolo.py --cfg yolov5s.yaml
 """
 
-from yolov5.utils.torch_utils import time_synchronized, fuse_conv_and_bn, model_info, scale_img, initialize_weights, \
-    select_device, copy_attr
-from yolov5.utils.general import make_divisible, check_file, set_logging
-from yolov5.utils.autoanchor import check_anchor_order
-from yolov5.models.experimental import *
-from yolov5.models.common import *
 import argparse
 import logging
 import sys
 from copy import deepcopy
 from pathlib import Path
+
+from yolov5.models.common import *
+from yolov5.models.experimental import *
+from yolov5.utils.autoanchor import check_anchor_order
+from yolov5.utils.general import check_file, make_divisible, set_logging
+from yolov5.utils.torch_utils import (copy_attr, fuse_conv_and_bn,
+                                      initialize_weights, model_info,
+                                      scale_img, select_device,
+                                      time_synchronized)
 
 # to run '$ python *.py' files in subdirectories
 sys.path.append(Path(__file__).parent.parent.absolute().__str__())
@@ -166,7 +169,8 @@ class Model(nn.Module):
                     logger.info(
                         f"{'time (ms)':>10s} {'GFLOPS':>10s} {'params':>10s}  {'module'}")
                 logger.info(f'{dt[-1]:10.2f} {o:10.2f} {m.np:10.0f}  {m.type}')
-
+            if isinstance(m, nn.Upsample):
+                m.recompute_scale_factor = None
             x = m(x)  # run
             y.append(x if m.i in self.save else None)  # save output
 

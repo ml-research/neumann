@@ -29,42 +29,25 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-bs", "--batch-size", type=int, default=4,
                         help="Batch size to infer with")
-    parser.add_argument("--batch-size-bs", type=int,
-                        default=1, help="Batch size in beam search")
     parser.add_argument("--num-objects", type=int, default=3,
                         help="The maximum number of objects in one image")
-    parser.add_argument("-ds","--dataset")  # , choices=["member"])
-    parser.add_argument("--rtpt-name", default="HS")  # , choices=["member"])
+    parser.add_argument("-ds","--dataset")
+    parser.add_argument("--rtpt-name", default="HS")
     parser.add_argument(
-       "-dt", "--dataset-type", choices=['vilp', 'clevr-hans', 'kandinsky'], help="vilp or kandinsky or clevr")
+       "-dt", "--dataset-type", choices=['vilp', 'clevr-hans', 'kandinsky'], help="clevr-list or kandinsky or clevr-hans")
     parser.add_argument("-d", "--device", default='cpu',
                         help='cuda device, i.e. 0 or cpu')
     parser.add_argument("--no-cuda", action="store_true",
                         help="Run on CPU instead of GPU (not recommended)")
-    parser.add_argument("--no-train", action="store_true",
-                        help="Perform prediction without training model")
-    parser.add_argument("--small-data", action="store_true",
-                        help="Use small training data.")
     parser.add_argument("--num-workers", type=int, default=4,
                         help="Number of threads for data loader")
     parser.add_argument('--gamma', default=0.01, type=float,
                         help='Smooth parameter in the softor function')
-    parser.add_argument("--plot", action="store_true",
-                        help="Plot images with captions.")
-    parser.add_argument("-pg", "--plot-graph", action="store_true",
-                        help="Plot images with captions.")
-    parser.add_argument("--t-beam", type=int, default=4,
-                        help="Number of rule expantion of clause generation.")
-    parser.add_argument("--n-beam", type=int, default=5,
-                        help="The size of the beam.")
-    parser.add_argument("--n-max", type=int, default=50,
-                        help="The maximum number of clauses.")
     parser.add_argument("-ps", "--program-size", type=int, default=1,
                         help="The size of the logic program.")
-    #parser.add_argument("--n-obj", type=int, default=2, help="The number of objects to be focused.")
     parser.add_argument("-e", "--epochs", type=int, default=100,
                         help="The number of epochs.")
-    parser.add_argument("--lr", type=float, default=1e-3,
+    parser.add_argument("--lr", type=float, default=1e-2,
                         help="The learning rate.")
     parser.add_argument("--n-data", type=float, default=200,
                         help="The number of data to be used.")
@@ -80,19 +63,16 @@ def get_args():
                         help="The len of body of clauses to be generated.")
     parser.add_argument("-tr","--trial", type=int, default=2,
                         help="The number of trials to generate clauses before the final training.")
-    parser.add_argument("-thd", "--th-depth", type=int, default=2,
+    parser.add_argument("-thd", "--th-depth", type=int, default=4,
                         help="The depth to specify the clauses to be pruned after generation.")
     parser.add_argument("-ns", "--n-sample", type=int, default=5,
                         help="The number of samples on each step of clause generation..")
-    parser.add_argument("-s", "--seed", type=int, default=0,
-                        help="Random seed.")
-    #  max_depth=1, max_body_len=1, max_var_num=5
     parser.add_argument("-md", "--max-depth", type=int, default=1, help="Max depth of terms.")
     parser.add_argument("-ml", "--max-body-len", type=int, default=1, help="Max length of the body.")
     parser.add_argument("-minl", "--min-body-len", type=int, default=3,
                         help="The minimum number of the body length for clauses to be used in learning.")
-    parser.add_argument("-mv", "--max-var", type=int, default=4, help="Max number of variables.")
-    parser.add_argument("-te", "--trial-epochs", type=int, default=10, help="The number of epochs in trials.")
+    parser.add_argument("-mv", "--max-var", type=int, default=4, help="Max number of variables that appear in clauses returned by the clause generator.")
+    parser.add_argument("-mvs", "--max-var-search", type=int, default=5, help="Max number of variables that appear in the clause search steps.")
     parser.add_argument("-pr", "--pos-ratio", type=float, default=0.1, help="The ratio of the positive examples in the final training.")
     parser.add_argument("-nr", "--neg-ratio", type=float, default=1.0, help="The ratio of the negative examples in the final training.")
     parser.add_argument("--n-ratio", type=float, default=1.0,
@@ -195,7 +175,8 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
 
         rtpt.step()#subtitle=f"loss={loss_i:2.2f}")
         print("loss: ", loss_i)
-
+        
+        """
         if (epoch > 0 and epoch % 5 == 0) or (trial > args.trial and epoch % 5 == 0):
             NEUMANN.print_program()
             print("Predicting on validation data set...")
@@ -205,13 +186,14 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
             acc_test, rec_test, th_test = predict(
                 NEUMANN, I2F, test_loader, args, device, th=0.5, split='test')
             wandb.log({'metric/test_accuracy': acc_test})
+        """
 
     return loss.item()
 
 def eval_clauses(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_loader, device, writer, rtpt, trial):
     bce = torch.nn.BCELoss()
     # coefficient for the clause scores (sum of gradients)
-    beta = 100000
+    beta = 10000
     iteration = 0
     clause_scores = torch.zeros(len(NEUMANN.clauses, )).to(device)
 
@@ -219,12 +201,8 @@ def eval_clauses(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_l
     grad_sum = torch.zeros(args.program_size, (len(NEUMANN.clauses)), device=device)
     predicted_list = []
     target_list = []
-    optimizer.zero_grad(set_to_none=False)
     for i, sample in tqdm(enumerate(train_loader, start=0)):
-        # 
-        #if i > 0:
-        #    print(NEUMANN.clause_weights.grad.detach())
-        # to cuda
+        optimizer.zero_grad(set_to_none=False)
         imgs, target_set = map(lambda x: x.to(device), sample)
         target_set = target_set.float()
 
@@ -234,19 +212,19 @@ def eval_clauses(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_l
         V_T = NEUMANN(V_0)
         # get the probabilities of the target atoms
         predicted = get_prob(V_T, NEUMANN, args)
+        loss = bce(predicted, target_set)
+        loss.backward()
+        grad_sum += NEUMANN.clause_weights.grad.detach()
         predicted_list.append(predicted)
         target_list.append(target_set)
+        # NEUMANN.print_valuation_batch(V_T)
 
     predicted = torch.cat(predicted_list)
     target_set = torch.cat(target_list)
-    loss = bce(predicted, target_set)
     # compute the gradients
-    loss.backward()
-    print(NEUMANN.clause_weights.grad.detach())
-    grad_sum += NEUMANN.clause_weights.grad.detach()
+    # print(NEUMANN.clause_weights.grad.detach())
     iteration += 1
     # print
-    # NEUMANN.print_valuation_batch(V_T)
     clause_scores_grad, indices = grad_sum.min(dim=0)
     clause_scores = clause_scores_grad * (-1) / len(train_loader)
 
@@ -268,12 +246,7 @@ def main(n):
     name = 'rgnn/' + args.dataset + '/' + str(n)
     writer = SummaryWriter(f"runs/{name}", purge_step=0)
 
-    #seed = n
-    seed = args.seed
-    seed_everything(seed)
 
-    # start weight and biases
-    wandb.init(project="NEUMANN-CLEVRHans", name="{}:seed_{}".format(args.dataset, args.seed))
 
 
     # Create RTPT object
@@ -283,132 +256,143 @@ def main(n):
     rtpt.start()
 
 
-    # Load logical representations
-    lark_path = 'src/lark/exp.lark'
-    lang_base_path = 'data/lang/'
-    lang, clauses, bk, bk_clauses, terms, atoms = get_lang(
-        lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
-    print("{} Atoms:".format(len(atoms)))
-
-    # Load the NEUMANN model
-    NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
-                             program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
-                             num_objects=args.num_objects, infer_step=args.infer_step, train=False) #train=not(args.no_train))
-    # clause generator
-    refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations(args, lang), max_depth=args.program_depth, max_body_len=args.max_body_len, max_var_num=args.max_var)
-    clause_generator = ClauseGenerator(refinement_generator=refinement_generator, root_clauses=clauses, th_depth=args.th_depth, n_sample=args.n_sample)
-    writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
-    writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))
-    num_nodes = len(NEUMANN.rgm.atom_node_idxs) + \
-        len(NEUMANN.rgm.conj_node_idxs)
-    writer.add_scalar("graph/num_nodes", num_nodes)
-
-    num_edges = NEUMANN.rgm.edge_index.size(1)
-    writer.add_scalar("graph/num_edges", num_edges)
-
-    writer.add_scalar("graph/memory_total", num_nodes + num_edges)
-
-    print("NUM NODES: ", num_nodes)
-    print("NUM EDGES: ", num_edges)
-    print("MEMORY TOTAL: ", num_nodes + num_edges)
-    # save the reasoning graph
-
-
-    # CHECK memory of tensors
-    """Check memoru of tensors.
-    print('check tensors.. ')
-    te = TensorEncoder(lang, atoms, clauses+bk_clauses, device, NEUMANN.rgm)
-    I = te.encode()
-    print(I)
-    print(I.size())
-    print("TENSOR MEMORY: ", I.size(0) * I.size(1) * I.size(2) * I.size(3))
-    I = I.expand(args.batch_size, -1, -1, -1, -1)
-    print("TENSOR MEMORY BATCH: ", I.size(0) * I.size(1) * I.size(2) * I.size(3) * I.size(4))
-    """
-
-    trial = 0
-    params = list(NEUMANN.parameters())
-    optimizer = torch.optim.RMSprop(params, lr=args.lr)
-    # clause_scores = torch.ones((args.program_size, len(NEUMANN.clauses, ))).to(device)
-
-    #too_simple_clauses = clauses
     times = []
-    softmax_temp = 1e-1
-    lr = 1e-2
-    print('lr={}'.format(lr))
+    val_accs = []
+    test_accs = []
+    for j in range(n):
+        #   start weight and biases
+        wandb.init(project="NEUMANN-CLEVRHans", name="{}:seed_{}_ratio_{}".format(args.dataset, j, args.pos_ratio))
+        seed_everything(j)
 
-    # initial clause scores
-    clause_scores = torch.ones(len(NEUMANN.clauses,)).to(device)
-    
-    # eval and generate clauses
-    while trial < args.trial:
+        # Load logical representations
+        lark_path = 'src/lark/exp.lark'
+        lang_base_path = 'data/lang/'
+        lang, clauses, bk, bk_clauses, terms, atoms = get_lang(
+            lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
+        print("{} Atoms:".format(len(atoms)))
+
+        # Load the NEUMANN model
+        NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
+                                 program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
+                                 num_objects=args.num_objects, infer_step=args.infer_step, train=False) #train=not(args.no_train))
+        # clause generator
+        if args.dataset_type == 'vilp':
+            refinement_types = ['atom', 'func', 'var']
+            refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations(args, lang), max_depth=1, max_body_len=args.max_body_len, max_var_num=args.max_var_search, refinement_types=refinement_types)
+        else:
+            refinement_generator = RefinementGenerator(lang=lang, mode_declarations=get_mode_declarations(args, lang), max_depth=1, max_body_len=args.max_body_len, max_var_num=args.max_var_search)
+        clause_generator = ClauseGenerator(refinement_generator=refinement_generator, root_clauses=clauses, th_depth=args.th_depth, n_sample=args.n_sample)
+        writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
+        writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))
+        num_nodes = len(NEUMANN.rgm.atom_node_idxs) + \
+            len(NEUMANN.rgm.conj_node_idxs)
+        writer.add_scalar("graph/num_nodes", num_nodes)
+
+        num_edges = NEUMANN.rgm.edge_index.size(1)
+        writer.add_scalar("graph/num_edges", num_edges)
+
+        writer.add_scalar("graph/memory_total", num_nodes + num_edges)
+
+        print("NUM NODES: ", num_nodes)
+        print("NUM EDGES: ", num_edges)
+        print("MEMORY TOTAL: ", num_nodes + num_edges)
+        # save the reasoning graph
+
+
+        # CHECK memory of tensors
+        """Check memoru of tensors.
+        print('check tensors.. ')
+        te = TensorEncoder(lang, atoms, clauses+bk_clauses, device, NEUMANN.rgm)
+        I = te.encode()
+        print(I)
+        print(I.size())
+        print("TENSOR MEMORY: ", I.size(0) * I.size(1) * I.size(2) * I.size(3))
+        I = I.expand(args.batch_size, -1, -1, -1, -1)
+        print("TENSOR MEMORY BATCH: ", I.size(0) * I.size(1) * I.size(2) * I.size(3) * I.size(4))
+        """
+
+        trial = 0
+        params = list(NEUMANN.parameters())
+        optimizer = torch.optim.RMSprop(params, lr=args.lr)
+        # clause_scores = torch.ones((args.program_size, len(NEUMANN.clauses, ))).to(device)
+
+        #too_simple_clauses = clauses
+        softmax_temp = 1e-1
+        lr = args.lr
+        print('lr={}'.format(lr))
+
+        # initial clause scores
+        clause_scores = torch.ones(len(NEUMANN.clauses,)).to(device)
+
         start = time.time()
+        # eval and generate clauses
+        while trial < args.trial:
+            NEUMANN, new_gen_clauses = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp, replace=True)
+            # generate clauses on positive examples
+            pos_ratio = args.pos_ratio
+            neg_ratio = 0.0 # pos_ratio * 0.01  #0.0
+            #neg_ratio =  min(0.2*(trial+1), 1.0)
+            train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=args.pos_ratio, neg_ratio=0.0)
+            # clause_generator.print_tree()
+            params = list(NEUMANN.parameters())
+            optimizer = torch.optim.RMSprop(params, lr=lr)
+            optimizer.zero_grad()
+            clause_scores = eval_clauses(args, NEUMANN, I2F, optimizer, train_loader, train_loader, test_loader, device, writer, rtpt, trial=trial)
+            trial += 1
+
+
+        # final updation
         NEUMANN, new_gen_clauses = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp, replace=True)
-        # generate clauses on positive examples
-        pos_ratio = 0.2 * 0.1
-        neg_ratio = 0.0 # pos_ratio * 0.01  #0.0
-        #neg_ratio =  min(0.2*(trial+1), 1.0)
-        train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=pos_ratio, neg_ratio=neg_ratio)
-        # clause_generator.print_tree()
+
+        final_clauses = sorted(list(clause_generator.refinement_history))
+        final_clauses = [c for c in final_clauses if len(c.body) >= args.min_body_len]
+        # final_clauses = sorted(clause_generator.get_clauses_by_th_depth(args.th_depth))
+        print("generated clauses: ")
+        for c in final_clauses:
+            print(c)
+
+
+        # finalize learninga
+        clauses = [c for c in final_clauses if len(c.body) >= args.min_body_len and len(c.all_vars()) <= args.max_var]
+        NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
+                                 program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
+                                 num_objects=args.num_objects, infer_step=args.infer_step, train=True)
+        # load dataset for weight optimization
+        if args.dataset_type in ['kandinsky', 'clevr-hans']:
+            train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=args.pos_ratio, neg_ratio=args.neg_ratio)
+        else:
+            train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=0.2, neg_ratio=1.0)
+
+        # set up the optimizer
         params = list(NEUMANN.parameters())
         optimizer = torch.optim.RMSprop(params, lr=lr)
         optimizer.zero_grad()
-        clause_scores = eval_clauses(args, NEUMANN, I2F, optimizer, val_loader, val_loader, test_loader, device, writer, rtpt, trial=trial)
+        # weight optimization
+        loss  = train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_loader, device, writer, rtpt, epochs=args.epochs, trial=trial)
+
         times.append(time.time() - start)
-        trial += 1
+        wandb.finish()
+        NEUMANN.print_program()
+        # validation split
+        print("Predicting on validation data set...")
+        acc_val, rec_val, th_val = predict(
+            NEUMANN, I2F, val_loader, args, device, th=None, split='val')
+        val_accs.append(acc_val)
 
+        print("Predicting on test data set...")
+        # test split
+        acc_test, rec_test, th_test = predict(
+            NEUMANN, I2F, test_loader, args, device, th=th_val, split='test')
+        test_accs.append(acc_test)
 
-    # final updation
-    NEUMANN, new_gen_clauses = update_by_refinement(NEUMANN, clause_scores, clause_generator, softmax_temp=softmax_temp, replace=True)
-
-    final_clauses = sorted(list(clause_generator.refinement_history))
-    final_clauses = [c for c in final_clauses if len(c.body) >= args.min_body_len]
-    # final_clauses = sorted(clause_generator.get_clauses_by_th_depth(args.th_depth))
-    print("generated clauses: ")
-    for c in final_clauses:
-        print(c)
-
-
-    # finalize learning
-    clauses = final_clauses
-    NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
-                             program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
-                             num_objects=args.num_objects, infer_step=args.infer_step, train=True)
-    # load dataset for weight optimization
-    train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=1.0, neg_ratio=0.5)
-    # set up the optimizer
-    params = list(NEUMANN.parameters())
-    optimizer = torch.optim.RMSprop(params, lr=lr)
-    optimizer.zero_grad()
-    # weight optimization
-    loss  = train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_loader, device, writer, rtpt, epochs=args.epochs, trial=trial)
-
-    wandb.finish()
-    NEUMANN.print_program()
-    # # validation split
-    # print("Predicting on validation data set...")
-    # acc_val, rec_val, th_val = predict(
-    #     NEUMANN, I2F, val_loader, args, device, th=0.5, split='val')
-    # print("Trial {}, acc_val: {}".format(trial, acc_val))
-    # if args.plot_graph:
-    #     print("Plotting reasoning graph...")
-    #     base_path = 'plot/reasoning_graph/'
-    #     os.makedirs(base_path, exist_ok=True)
-    #     path = base_path + "rg_{}_{}_trial_{}.png".format(args.dataset_type, args.dataset, trial)
-    #     plot_reasoning_graph(path, NEUMANN.rgm)
-    # print("Predicting on training data set...")
-    # # training split
-    # acc, rec, th = predict(
-    #     NEUMANN, I2F, train_loader, args, device, th=th_val, split='train')
-
-    # print("Predicting on test data set...")
-    # # test split
-    # acc_test, rec_test, th_test = predict(
-    #     NEUMANN, I2F, test_loader, args, device, th=th_val, split='test')
-
-    # print("training acc: ", acc, "threashold: ", th, "recall: ", rec)
-    # print("val acc: ", acc_val, "threashold: ", th_val, "recall: ", rec_val)
-    # print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
+        print("val acc: ", acc_val, "threashold: ", th_val, "recall: ", rec_val)
+        print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
+        with open('out/learning_time/time_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
+            f.write("\n".join(str(item) for item in times))
+        with open('out/learning_time/validation_accuracy_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
+            f.write("\n".join(str(item) for item in val_accs))
+        with open('out/learning_time/test_accuracy_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
+            f.write("\n".join(str(item) for item in test_accs))
 
 
 def seed_everything(seed=42):
@@ -420,4 +404,5 @@ def seed_everything(seed=42):
 
 
 if __name__ == "__main__":
+    # n: number of random seeds to be tried
     main(n=1)

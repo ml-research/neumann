@@ -39,7 +39,9 @@ class RefinementGenerator(object):
         """Return a boolean value that represents the mode declaration can be used or not
         in terms of the recall.
         """
-        return clause.count_by_predicate(mode_declaration.pred) < mode_declaration.recall
+        pred_num = clause.count_by_predicate(mode_declaration.pred)
+        md_recall = mode_declaration.recall
+        return pred_num < md_recall
         #return self.recall_counter_dic[str(mode_declaration)] < mode_declaration.recall
 
     def _increment_recall(self, mode_declaration):
@@ -103,7 +105,8 @@ class RefinementGenerator(object):
                     terms = sorted(terms)
                 new_atom = Atom(modeb.pred, terms)
                 if not new_atom in clause.body:
-                    new_clause = Clause(clause.head, clause.body + [new_atom])
+                    new_body = sorted(clause.body + [new_atom])
+                    new_clause = Clause(clause.head, new_body)
                     # remove tautology
                     if not (len(clause.body)==1 and clause.head == clause.body[0]):
                         C_refined.append(new_clause)
@@ -149,11 +152,12 @@ class RefinementGenerator(object):
         C_refined = []
         for modeb in self.mode_declarations:
             C_refined.extend(self.refine_from_modeb(clause, modeb))
-        C_refined.extend(self.apply_func(clause))
-        C_refined.extend(self.subs_const(clause))
-        C_refined.extend(self.subs_var(clause))
+        #C_refined.extend(self.apply_func(clause))
+        #C_refined.extend(self.subs_const(clause))
+        #C_refined.extend(self.subs_var(clause))
         # C_refined.extend(self.swap_vars(clause))
         result = self._remove_invalid_clauses(list(set(C_refined)))
+        #result = list(set(C_refined))
         return result
 
 

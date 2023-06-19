@@ -55,15 +55,26 @@ def update_by_clauses(neumann, clauses, softmax_temp=1.0):
                    bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
     return NEUM
 
-def update_by_refinement(neumann, clause_scores, clause_generator, softmax_temp=1.0):
+def update_by_refinement(neumann, clause_scores, clause_generator, softmax_temp=1.0, replace=False):
     """Generate new neumann instance by generating and adding new clauses using clause scores.
-    """
+    """    
+    # printing with scores
+    idxs = np.argsort(-clause_scores.cpu().numpy())
+    print(clause_scores)
+    print("==== CLAUSE SCORES ===")
+    for n, i in enumerate(idxs):
+        #if n < 20:
+        print(np.round(clause_scores[i].cpu().numpy(), 3), neumann.clauses[i])
     generated_clauses = clause_generator.generate(neumann.clauses, clause_scores)
-    clause_generator.print_tree()
+    ### clause_generator.print_tree()
     pruned_old_clauses = [c for c in neumann.clauses if not add_true_atom(c) in clause_generator.refinement_history]
     ### Do we need old clauses?? too general clauses should be excluded
     # new_clauses = sorted(list(set(neumann.clauses + new_gen_clauses)))
-    new_clauses = sorted(list(set(generated_clauses + pruned_old_clauses)))
+    if replace:
+        new_clauses = sorted(list(set(generated_clauses)))
+    else:
+        new_clauses = sorted(list(set(generated_clauses + pruned_old_clauses)))
+
 
     RGM = ReasoningGraphModule(clauses=new_clauses + neumann.bk_clauses, facts=neumann.atoms,
                                terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device)#, clause_casche=neumann.rgm.clause_casche, grounding_casche=neumann.rgm.grounding_casche)
@@ -80,7 +91,7 @@ def __update_by_refinement(neumann, clause_scores, refinement_generator, softmax
     #print("==== CLAUSE SCORES ===")
     #for i in idxs:
     #    print(np.round(clause_scores[i].cpu().numpy(), 3), clauses[i])
-    print(clause_scores)
+    # print(clause_scores)
     clauses_to_refine = []
     for i in range(clause_scores.size(0)):
         selected_clause_indices = torch.stack([F.gumbel_softmax(clause_scores[i], tau=1.0, hard=True) for j in range(5)])
@@ -280,9 +291,9 @@ def get_prob(v_T, Reasoner, args):
 
 def get_data_loader(args, device, pos_ratio=1.0, neg_ratio=1.0):
     if args.dataset_type == 'kandinsky':
-        return get_kandinsky_loader(args)
+        return get_kandinsky_loader(args, pos_ratio, neg_ratio)
     elif args.dataset_type == 'clevr-hans':
-        return get_clevr_loader(args)
+        return get_clevr_loader(args, pos_ratio, neg_ratio)
     elif args.dataset_type == 'vilp':
         return get_vilp_loader(args, pos_ratio, neg_ratio)
     elif args.dataset_type == 'behind-the-scenes':
@@ -291,15 +302,15 @@ def get_data_loader(args, device, pos_ratio=1.0, neg_ratio=1.0):
         assert 0, 'Invalid dataset type: ' + args.dataset_type
 
 
-def get_kandinsky_loader(args, shuffle=False):
+def get_kandinsky_loader(args, pos_ratio, neg_ratio):
     dataset_train = data_kandinsky.KANDINSKY(
-        args.dataset, 'train', args.n_ratio
+        args.dataset, 'train', pos_ratio, neg_ratio
     )
     dataset_val = data_kandinsky.KANDINSKY(
-        args.dataset, 'val', args.n_ratio
+        args.dataset, 'val', pos_ratio=pos_ratio, neg_ratio=neg_ratio
     )
     dataset_test = data_kandinsky.KANDINSKY(
-        args.dataset, 'test', args.n_ratio
+        args.dataset, 'test', pos_ratio=1.0, neg_ratio=1.0
     )
 
     train_loader = torch.utils.data.DataLoader(
@@ -337,15 +348,15 @@ def get_behind_the_scenes_loader(question_json_path, batch_size, lang, n_data, d
     return test_loader
 
 
-def get_clevr_loader(args):
+def get_clevr_loader(args, pos_ratio, neg_ratio):
     dataset_train = data_clevr.CLEVRHans(
-        args.dataset, 'train', args.n_ratio
+        args.dataset, 'train', pos_ratio, neg_ratio
     )
     dataset_val = data_clevr.CLEVRHans(
-        args.dataset, 'val', args.n_ratio
+        args.dataset, 'val', pos_ratio=1.0, neg_ratio=1.0
     )
     dataset_test = data_clevr.CLEVRHans(
-        args.dataset, 'test', args.n_ratio
+        args.dataset, 'test', pos_ratio=1.0, neg_ratio=1.0
     )
 
     train_loader = torch.utils.data.DataLoader(

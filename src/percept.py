@@ -3,11 +3,10 @@ import sys
 import torch
 import torch.nn as nn
 
+from slot_attention.model import SlotAttention_model, SlotAttention_slots_model
 from yolov5.models.experimental import attempt_load
 from yolov5.utils.general import non_max_suppression
 
-from slot_attention.model import SlotAttention_model, SlotAttention_slots_model
-import sys
 sys.path.insert(0, 'src/yolov5')
 
 
@@ -117,12 +116,15 @@ class SlotAttentionPerceptionModule(nn.Module):
 
     def forward(self, imgs):
         Z = self.model(imgs)
+        return Z
+        """
         # sort the output of slot attention w.r.t objectness and take top-e outputs
         sorted, indices = torch.sort(Z[:,:,0], descending=True)
         indices_e = indices[:, :self.e]
 
         indices = indices_e.unsqueeze(-1).expand((-1, -1, Z.size(2)))
         return torch.gather(Z, 1, indices)
+        """
 
 
 class SlotAttentionMultiScenesPerceptionModule(nn.Module):

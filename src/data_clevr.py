@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 
 
-def load_images_and_labels(dataset='clevr-hans3', split='train', n_ratio=1.0, base=None):
+def load_images_and_labels(dataset='clevr-hans3', split='train', pos_ratio=1.0, neg_ratio=1.0, base=None):
     """Load image paths and labels for clevr-hans dataset.
     """
     image_paths = []
@@ -17,17 +17,14 @@ def load_images_and_labels(dataset='clevr-hans3', split='train', n_ratio=1.0, ba
     false_folder = folder + 'false/'
 
     filenames = sorted(os.listdir(true_folder))
-    if split == 'train':
-        n = int(n_ratio * len(filenames)) #int(len(filenames)/10)
-    else:
-        n = int(n_ratio * len(filenames))
+    n = int(pos_ratio * len(filenames))
     for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(true_folder, filename))
             labels.append(1)
 
     filenames = sorted(os.listdir(false_folder))
-    n = int(n_ratio * len(filenames))
+    n = int(neg_ratio * len(filenames))
     for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(false_folder, filename))
@@ -51,7 +48,7 @@ class CLEVRHans(torch.utils.data.Dataset):
     The implementations is mainly from https://github.com/ml-research/NeSyConceptLearner/blob/main/src/pretrain-slot-attention/data.py.
     """
 
-    def __init__(self, dataset, split, n_ratio=1.0, img_size=128, base=None):
+    def __init__(self, dataset, split,  pos_ratio=1.0, neg_ratio=1.0, img_size=128, base=None):
         super().__init__()
         self.img_size = img_size
         self.dataset = dataset
@@ -65,7 +62,7 @@ class CLEVRHans(torch.utils.data.Dataset):
             [transforms.Resize((img_size, img_size))]
         )
         self.image_paths, self.labels = load_images_and_labels(
-            dataset=dataset, split=split, n_ratio=n_ratio)
+            dataset=dataset, split=split, pos_ratio=pos_ratio, neg_ratio=neg_ratio)
 
     def __getitem__(self, item):
         path = self.image_paths[item]

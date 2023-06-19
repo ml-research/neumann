@@ -11,7 +11,7 @@ class KANDINSKY(torch.utils.data.Dataset):
     """Kandinsky Patterns dataset.
     """
 
-    def __init__(self, dataset, split, n_ratio=1.0, img_size=128):
+    def __init__(self, dataset, split, pos_ratio=1.0, neg_ratio=1.0, img_size=128):
         self.img_size = img_size
         assert split in {
             "train",
@@ -19,7 +19,7 @@ class KANDINSKY(torch.utils.data.Dataset):
             "test",
         }
         self.image_paths, self.labels = load_images_and_labels(
-            dataset=dataset, split=split,  n_ratio=n_ratio)
+            dataset=dataset, split=split,  pos_ratio=pos_ratio, neg_ratio=neg_ratio)
         print("{} {} images loaded!!".format(len(self.image_paths), split))
 
     def __getitem__(self, item):
@@ -36,7 +36,7 @@ class KANDINSKY(torch.utils.data.Dataset):
         return len(self.labels)
 
 
-def load_images_and_labels(dataset='twopairs', split='train', n_ratio=1.0, img_size=128):
+def load_images_and_labels(dataset='twopairs', split='train', pos_ratio=1.0, neg_ratio=1.0, img_size=128):
     """Load image paths and labels for kandinsky dataset.
     """
     image_paths = []
@@ -50,14 +50,14 @@ def load_images_and_labels(dataset='twopairs', split='train', n_ratio=1.0, img_s
     #    n = int(len(filenames)/10)
     #else:
     #    n = len(filenames)
-    n = int(n_ratio * len(filenames))
+    n = int(pos_ratio * len(filenames))
     for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(true_folder, filename))
             labels.append(1)
 
     filenames = sorted(os.listdir(false_folder))
-    n = int(n_ratio * len(filenames))
+    n = int(neg_ratio * len(filenames))
     for filename in filenames[:n]:
         if filename != '.DS_Store':
             image_paths.append(os.path.join(false_folder, filename))

@@ -22,21 +22,66 @@ class ClauseGenerator(object):
         self.n_sample = n_sample
         self.is_root = True
         self.refinement_history = set()
+        self.refinement_score_history = set()
 
     
+    def generate(self, clauses, clause_scores):
+        clauses_to_refine = self.sample_clauses_by_scores(clauses, clause_scores)
+        print("=== CLAUSES TO BE REFINED ===")
+        for i, cr in enumerate(clauses_to_refine):
+            print(i, ': ', cr)
+
+        self.refinement_history = self.refinement_history.union(set(clauses_to_refine))
+        # self.refinement_history = list(set(self.clause_history))
+        new_clauses = add_true_atoms(self.apply_refinement(remove_true_atoms(clauses_to_refine)))
+        # prune already appeared clauses
+        new_clauses = [c for c in new_clauses if not c in self.refinement_history]
+        return list(set(new_clauses))
+    
+
     def sample_clauses_by_scores(self, clauses, clause_scores):
         clauses_to_refine = []
         print("Logits for the sampling: ")
         print(np.round(clause_scores.cpu().numpy(), 2))
-        for i in range(clause_scores.size(0)):
-            clauses_dic, scores_dic = self.split_by_head_preds(clauses, clause_scores[i])
-            for p, clauses_p in clauses_dic.items():
-                selected_clause_indices = torch.stack([F.gumbel_softmax(scores_dic[p], tau=1.0, hard=True) for j in range(int(self.n_sample / len(clauses_dic.keys())))])
-                selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
-                # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
-                clauses_to_refine_i = [c for i, c in enumerate(clauses_p) if selected_clause_indices[i] > 0]
-                clauses_to_refine.extend(clauses_to_refine_i)
-            clauses_to_refine = list(set(clauses_to_refine))
+
+        n_sampled = 0
+        while n_sampled < self.n_sample:
+            if len(clauses) == 0:
+                # no more clauses to be sampled
+                break
+            i_sampled_onehot = F.gumbel_softmax(clause_scores,  tau=1.0, hard=True)
+            i_sampled = int(torch.argmax(i_sampled_onehot, dim=0).item())
+            # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
+            # clauses_to_refine_i = [c for i, c in enumerate(clauses) if selected_clause_indices[i] > 0]
+            sampled_clause = clauses[i_sampled]
+            score = np.round(clause_scores[i_sampled].cpu().numpy(), 2)
+
+            if score in self.refinement_score_history:
+                # if a clause with the same score is already sampled, just skip this
+                # renormalize clause scores
+                if i_sampled != len(clauses)-1:
+                    clause_scores = torch.cat([clause_scores[:i_sampled], clause_scores[i_sampled + 1:]])
+                    clauses.remove(sampled_clause)
+                else:
+                    clause_scores = clause_scores[:i_sampled]
+                    clauses.remove(sampled_clause)
+            else:
+                # append to the result
+                clauses_to_refine.append(sampled_clause)
+                # update history
+                self.refinement_score_history.add(score)
+                self.refinement_history.add(sampled_clause)
+                # renormalize socres
+                if i_sampled != len(clauses)-1:
+                    clause_scores = torch.cat([clause_scores[:i_sampled], clause_scores[i_sampled + 1:]])
+                    clauses.remove(sampled_clause)
+                else:
+                    clause_scores = clause_scores[:i_sampled]
+                    clauses.remove(sampled_clause)
+
+                n_sampled += 1
+            
+        clauses_to_refine = list(set(clauses_to_refine))
         return clauses_to_refine
 
     def split_by_head_preds(self, clauses, clause_scores):
@@ -55,21 +100,10 @@ class ClauseGenerator(object):
         return head_pred_clauses_dic, head_pred_scores_dic
         
     
-    def generate(self, clauses, clause_scores):
-        clauses_to_refine = self.sample_clauses_by_scores(clauses, clause_scores)
-        print("=== CLAUSES TO BE REFINED ===")
-        for i, cr in enumerate(clauses_to_refine):
-            print(i, ': ', cr)
-
-        self.refinement_history = self.refinement_history.union(set(clauses_to_refine))
-        # self.refinement_history = list(set(self.clause_history))
-        new_clauses = add_true_atoms(self.apply_refinement(remove_true_atoms(clauses_to_refine)))
-        return list(set(new_clauses))
-    
     def apply_refinement(self, clauses):
         all_new_clauses = []
         for clause in clauses:
-            new_clauses = self.generate_clauses_by_refinemnet(clause)
+            new_clauses = self.generate_clauses_by_refinement(clause)
             all_new_clauses.extend(new_clauses)
             # add to the refinement tree
             #self.print_tree()
@@ -91,7 +125,7 @@ class ClauseGenerator(object):
         return all_new_clauses
             
 
-    def generate_clauses_by_refinemnet(self, clause):
+    def generate_clauses_by_refinement(self, clause):
         return list(set(add_true_atoms(self.refinement_generator.refine_clause(clause))))
 
     def print_tree(self):
@@ -102,3 +136,33 @@ class ClauseGenerator(object):
         """Get all clauses that are located deeper nodes than given threashold."""
         nodes = findall(self.tree, filter_=lambda node: node.depth >= th_depth)
         return [node.clause for node in nodes]
+    """
+    def __sample_clauses_by_scores(self, clauses, clause_scores):
+        clauses_to_refine = []
+        print("Logits for the sampling: ")
+        print(np.round(clause_scores.cpu().numpy(), 2))
+        for i in range(clause_scores.size(0)):
+            clauses_dic, scores_dic = self.split_by_head_preds(clauses, clause_scores[i])
+            for p, clauses_p in clauses_dic.items():
+                selected_clause_indices = torch.stack([F.gumbel_softmax(scores_dic[p] * 100, tau=1.0, hard=True) for j in range(int(self.n_sample / len(clauses_dic.keys())))])
+                selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
+                # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
+                clauses_to_refine_i = [c for i, c in enumerate(clauses_p) if selected_clause_indices[i] > 0]
+                clauses_to_refine.extend(clauses_to_refine_i)
+            clauses_to_refine = list(set(clauses_to_refine))
+        return clauses_to_refine
+
+
+        def sample_clauses_by_scores(self, clauses, clause_scores):
+        clauses_to_refine = []
+        print("Logits for the sampling: ")
+        print(np.round(clause_scores.cpu().numpy(), 2))
+        for i in range(clause_scores.size(0)):
+            selected_clause_indices = torch.stack([F.gumbel_softmax(clause_scores[i],  tau=1.0, hard=True) for j in range(int(self.n_sample))])
+            selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
+            # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
+            clauses_to_refine_i = [c for i, c in enumerate(clauses) if selected_clause_indices[i] > 0]
+            clauses_to_refine.extend(clauses_to_refine_i)
+        clauses_to_refine = list(set(clauses_to_refine))
+        return clauses_to_refine
+    """

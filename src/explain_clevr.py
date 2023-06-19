@@ -1,7 +1,9 @@
 import argparse
+import os
 import pickle
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from rtpt import RTPT
@@ -9,6 +11,7 @@ from sklearn.metrics import accuracy_score, recall_score, roc_curve
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+from explanation_utils import *
 from logic_utils import get_lang
 from mode_declaration import get_mode_declarations
 from neumann_utils import (get_clause_evaluator, get_data_loader, get_model,
@@ -80,24 +83,6 @@ def discretise_NEUMANN(NEUMANN, args, device):
     clauses = NEUMANN.get_clauses()
     return get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False)
 
-def to_attention_maps(atom_grads, atoms, img, I2F):
-    TODO
-
-def get_target_maps(atoms, atom_grads, attention_maps):
-    if atom_grads.size(0) == 1:
-        atom_grads = atom_grads.squeeze(0)
-
-    obj_ids = []
-    for i, g in enumerate(atom_grads):
-        atom = atoms[i]
-        if g > 0.2 and 'obj' in str(atom):
-            obj_id = str(atom).split(',')[0][-1]
-            obj_id = int(obj_id)
-            if not obj_id in obj_ids:
-                obj_ids.append(obj_id)
-    return [attention_maps[i] for i in obj_ids]
-
-
 def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
     predicted_list = []
     target_list = []
@@ -110,6 +95,7 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
             # to cuda
             target_set = target_set.float()
 
+            #imgs: torch.Size([1, 1, 3, 128, 128])
             V_0 = I2F(imgs)
             V_T = NEUMANN(V_0)
             #a NEUMANN.print_valuation_batch(V_T)
@@ -121,60 +107,23 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
                     pred.backward(retain_graph=True)
                     atom_grads = NEUMANN.mpm.dummy_zeros.grad.squeeze(-1).unsqueeze(0)
                     attention_maps = I2F.pm.model.slot_attention.attention_maps.squeeze(0)
-                    target_maps = get_target_maps(NEUMANN.atoms, atom_grads, attention_maps)
+                    target_attention_maps = get_target_maps(NEUMANN.atoms, atom_grads, attention_maps)
                     #print(atom_grads, torch.max(atom_grads), atom_grads.shape)
                     NEUMANN.print_valuation_batch(atom_grads)
 
+                    
+
+                    imgs_to_plot = to_plot_images_clevr(imgs.squeeze(0).detach().cpu())
+                    captions = generate_captions(atom_grads, NEUMANN.atoms, args.num_objects, th=0.33)
+                     # + args.dataset + '/' + split + '/', \
+                    save_images_with_captions_and_attention_maps(imgs_to_plot, target_attention_maps, captions, folder='explanation/clevr/', \
+                                                                 img_id=count, dataset=args.dataset)
                     NEUMANN.mpm.dummy_zeros.grad.detach_()
                     NEUMANN.mpm.dummy_zeros.grad.zero_()
-
-            # predicted = to_one_label(predicted, target_set)
-            # predicted = torch.softmax(predicted * 10, dim=1)
-            #predicted_list.append(predicted.detach())
-            #target_list.append(target_set.detach())
-            """
-            if args.plot:
-                imgs = to_plot_images_clevr(imgs.squeeze(1))
-                captions = generate_captions(
-                    V_T, NEUMANN.atoms, I2F.pm.e, th=0.3)
-                save_images_with_captions(
-                    imgs, captions, folder='result/kandinsky/' + args.dataset + '/' + split + '/', img_id_start=count, dataset=args.dataset)
-            """
-            count += V_T.size(0)  # batch size
+                count += 1
     reasoning_time = time.time() - start
     print('Reasoning Time: ', reasoning_time)
     return 0, 0, 0, reasoning_time
-
-    predicted = torch.cat(predicted_list, dim=0).detach().cpu().numpy()
-    target_set = torch.cat(target_list, dim=0).to(
-        torch.int64).detach().cpu().numpy()
-    
-    if th == None:
-        fpr, tpr, thresholds = roc_curve(target_set, predicted, pos_label=1)
-        accuracy_scores = []
-        print('ths', thresholds)
-        for thresh in thresholds:
-            accuracy_scores.append(accuracy_score(
-                target_set, [m > thresh for m in predicted]))
-
-        accuracies = np.array(accuracy_scores)
-        max_accuracy = accuracies.max()
-        max_accuracy_threshold = thresholds[accuracies.argmax()]
-        rec_score = recall_score(
-            target_set,  [m > thresh for m in predicted], average=None)
-
-        print('target_set: ', target_set, target_set.shape)
-        print('predicted: ', predicted, predicted.shape)
-        print('accuracy: ', max_accuracy)
-        print('threshold: ', max_accuracy_threshold)
-        print('recall: ', rec_score)
-
-        return max_accuracy, rec_score, max_accuracy_threshold, reasoning_time
-    else:
-        accuracy = accuracy_score(target_set, [m > th for m in predicted])
-        rec_score = recall_score(
-            target_set,  [m > th for m in predicted], average=None)
-        return accuracy, rec_score, th, reasoning_time
 
 
 def to_one_label(ys, labels, th=0.7):
@@ -196,6 +145,7 @@ def to_one_label(ys, labels, th=0.7):
 
 
 def main(n):
+    seed_everything(n)
     args = get_args()
     assert args.batch_size == 1, "Set batch_size=1."
     #name = 'VILP'
@@ -263,7 +213,7 @@ def main(n):
     # train split
     for j in range(n):
         acc_test, rec_test, th_test, time = predict(
-            NEUMANN, I2F, train_loader, args, device, th=0.5, split='test')
+            NEUMANN, I2F, test_loader, args, device, th=0.5, split='test')
         times.append(time)
     
     with open('out/inference_time/time_{}_ratio_{}.txt'.format(args.dataset, args.n_ratio), 'w') as f:
@@ -271,6 +221,22 @@ def main(n):
 
     print("train acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
 
+
+def seed_everything(seed: int):
+    import os
+    import random
+
+    import numpy as np
+    import torch
+    
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
+
 if __name__ == "__main__":
-    main(n=5)
+    main(n=1)
 

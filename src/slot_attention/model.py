@@ -1,11 +1,11 @@
 """
 Slot attention model based on code of tkipf and the corresponding paper Locatello et al. 2020
 """
-from torch import nn
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.models as models
-import numpy as np
+from torch import nn
 from torchsummary import summary
 
 
@@ -39,17 +39,27 @@ class SlotAttention(nn.Module):
         self.norm_slots = nn.LayerNorm(dim, eps=1e-05)
         self.norm_mlp = nn.LayerNorm(dim, eps=1e-05)
 
+        self.initial_slots = None
+
     def forward(self, inputs, num_slots=None):
         b, n, d = inputs.shape
         n_s = num_slots if num_slots is not None else self.num_slots
 
+        """
         mu = self.slots_mu.expand(b, n_s, -1)
         sigma = self.softplus(self.slots_log_sigma.expand(b, n_s, -1))
-        slots = torch.normal(mu, sigma)
+        if self.initial_slots == None:
+            self.initial_slots = torch.normal(mu, sigma)
+        """
+        mu = self.slots_mu.expand(1, n_s, -1)
+        sigma = self.softplus(self.slots_log_sigma.expand(1, n_s, -1))
+        if self.initial_slots == None:
+            self.initial_slots = torch.normal(mu, sigma)
 
         inputs = self.norm_inputs(inputs)
         k, v = self.project_k(inputs), self.project_v(inputs)
 
+        slots = self.initial_slots.expand(b, -1, -1)
         for _ in range(self.iters):
             slots_prev = slots
 
@@ -59,7 +69,9 @@ class SlotAttention(nn.Module):
             dots = torch.einsum('bid,bjd->bij', q, k) * self.scale
             attn = dots.softmax(dim=1) + self.eps
             attn = attn / attn.sum(dim=-1, keepdim=True)
-
+            
+            self.attention_maps = attn 
+            
             updates = torch.einsum('bjd,bij->bid', v, attn)
 
             slots = self.gru(

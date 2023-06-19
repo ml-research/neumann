@@ -100,14 +100,14 @@ def get_mode_declarations_clevr(lang, obj_num):
     kp3(X):-in(O1,X),in(O2,X),size(O1,large),color(O1,blue),shape(O1,sphere),size(O2,small),color(O2,yellow),shape(O2,sphere)."""
 
     modeb_list = [
-        ModeDeclaration('body', obj_num, lang.get_pred_by_name(
-            'in'), [m_object, p_image]),
+        #ModeDeclaration('body', obj_num, lang.get_pred_by_name(
+        #    'in'), [m_object, p_image]),
         ModeDeclaration('body', 2, lang.get_pred_by_name(
             'color'), [p_object, s_color]),
         ModeDeclaration('body', 2, lang.get_pred_by_name(
             'shape'), [p_object, s_shape]),
-        ModeDeclaration('body', 1, lang.get_pred_by_name(
-            'material'), [p_object, s_material]),
+        #ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #    'material'), [p_object, s_material]),
         ModeDeclaration('body', 2, lang.get_pred_by_name(
             'size'), [p_object, s_size]),
     ]
@@ -124,17 +124,17 @@ def get_mode_declarations_kandinsky(lang, obj_num):
     # modeh_1 = ModeDeclaration('head', 'kp', p_image)
 
     modeb_list = [
-        ModeDeclaration('body', obj_num, lang.get_pred_by_name(
-            'in'), [m_object, p_image]),
+        #ModeDeclaration('body', obj_num, lang.get_pred_by_name(
+        #    'in'), [m_object, p_image]),
         ModeDeclaration('body', 1, lang.get_pred_by_name(
             'color'), [p_object, s_color]),
         ModeDeclaration('body', 1, lang.get_pred_by_name(
             'shape'), [p_object, s_shape]),
-        ModeDeclaration('body', 2, lang.get_pred_by_name(
+        ModeDeclaration('body', 1, lang.get_pred_by_name(
             'same_color_pair'), [p_object, p_object], ordered=False),
         ModeDeclaration('body', 2, lang.get_pred_by_name(
             'same_shape_pair'), [p_object, p_object], ordered=False),
-        ModeDeclaration('body', 1, lang.get_pred_by_name(
+        ModeDeclaration('b１ody', 1, lang.get_pred_by_name(
             'diff_color_pair'), [p_object, p_object], ordered=False),
         ModeDeclaration('body', 1, lang.get_pred_by_name(
             'diff_shape_pair'), [p_object, p_object], ordered=False),
@@ -183,10 +183,12 @@ def get_mode_declarations_vilp(lang, dataset):
         #    'sort'), [p_colors, p_colors])
     return modeb_list
 
-def get_mode_declarations(args, lang, obj_num):
+def get_mode_declarations(args, lang):
     if args.dataset_type == 'kandinsky':
-        return get_mode_declarations_kandinsky(lang, obj_num)
-    elif args.dataset_type == 'clevr':
-        return get_mode_declarations_clevr(lang, obj_num)
+        return get_mode_declarations_kandinsky(lang, args.num_objects)
+    elif args.dataset_type == 'clevr-hans':
+        return get_mode_declarations_clevr(lang, 10)
+    elif args.dataset_type == 'vilp':
+        return get_mode_declarations_vilp(lang, args.dataset)
     else:
         assert False, "Invalid data type."

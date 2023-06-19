@@ -1,0 +1,1 @@
+kp(X):-in(O1,X),in(O2,X),in(O3,X),in(O4,X),in(O5,X),online(O1,O2,O3,O4,O5),same_color_pair(O1,O2),same_shape_pair(O1,O2).

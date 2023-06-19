@@ -9,7 +9,7 @@ false = Atom(p_, [Const('__F__', dtype=DataType('spec'))])
 true = Atom(p_, [Const('__T__', dtype=DataType('spec'))])
 
 
-def get_lang(lark_path, lang_base_path, dataset_type, dataset, term_depth):
+def get_lang(lark_path, lang_base_path, dataset_type, dataset, term_depth, use_learned_clauses=False):
     """Load the language of first-order logic from files.
 
     Read the language, clauses, background knowledge from files.
@@ -19,8 +19,12 @@ def get_lang(lark_path, lang_base_path, dataset_type, dataset, term_depth):
     du = DataUtils(lark_path=lark_path, lang_base_path=lang_base_path,
                    dataset_type=dataset_type, dataset=dataset)
     lang = du.load_language()
-    clauses = add_true_atoms(du.load_clauses(
-        du.base_path + 'clauses.txt', lang))
+    if not use_learned_clauses:
+        clauses = add_true_atoms(du.load_clauses(
+            du.base_path + 'clauses.txt', lang))
+    else:
+        clauses = add_true_atoms(du.load_clauses(
+            du.base_path + 'learned_clauses.txt', lang))
     bk_clauses = add_true_atoms(du.load_clauses(
         du.base_path + 'bk_clauses.txt', lang))
     bk = du.load_atoms(du.base_path + 'bk.txt', lang)

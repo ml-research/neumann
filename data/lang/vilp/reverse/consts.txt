@@ -1,7 +1,0 @@
-object_img1:obj1,obj2,obj3
-object_img2:obj4,obj5,obj6
-objects_img1:**
-objects_img2:***
-color:cyan,gray,red,yellow
-colors:*
-image:img1,img2

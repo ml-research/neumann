@@ -1,8 +1,0 @@
-append:3:colors,colors,colors
-scene_img1:1:colors
-scene_img2:1:colors
-scene_img3:1:colors
-pos:3:image,image,image
-chain_img1:1:objects_img1
-chain_img2:1:objects_img2
-chain_img3:1:objects_img3

@@ -1,3 +1,0 @@
-f:2:color,colors:colors
-g:2:object_img2,objects_img2:objects_img2
-s:1:int:int

@@ -1,2 +1,0 @@
-cyclic(X):-edge(X,X).
-edge(X,Y):-edge(X,Z),edge(Z,Y).

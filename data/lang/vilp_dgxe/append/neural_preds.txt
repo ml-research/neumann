@@ -1,6 +1,0 @@
-color_img1:2:object_img1,color
-color_img2:2:object_img2,color
-color_img3:2:object_img3,color
-left_of_img1:2:object_img1,object_img1
-left_of_img2:2:object_img2,object_img2
-left_of_img3:2:object_img3,object_img3

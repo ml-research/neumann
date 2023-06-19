@@ -1,4 +1,0 @@
-same_position(1st,1st).
-same_position(2nd,2nd).
-same_position(3rd,3rd).
-reverse(*,*,*).

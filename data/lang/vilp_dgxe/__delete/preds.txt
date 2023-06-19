@@ -1,5 +1,0 @@
-scene:1:colors
-scene_2:1:colors
-scene_1:1:colors
-delete:3:color,colors,colors
-chain:1:objects

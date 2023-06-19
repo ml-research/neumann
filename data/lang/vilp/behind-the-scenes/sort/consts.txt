@@ -1,7 +1,0 @@
-color:cyan,gray,red,yellow
-colors:*
-object:obj0,obj1,obj2
-objects:**
-position:1st,2nd,3rd
-query_type:q_delete,q_append,q_reverse,q_sort
-query:q

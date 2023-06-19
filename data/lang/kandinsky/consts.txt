@@ -1,4 +1,0 @@
-object:obj0,obj1,obj2,obj3
-color:red,yellow,blue
-shape:square,circle,triangle
-image:img

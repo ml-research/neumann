@@ -1,4 +1,0 @@
-answer(X):-scene(Colors1),delete(Color,Colors1,Colors2),query3(q,q_delete,Color,Position),get_color(Colors2,Position,X).
-answer(X):-scene_2(Colors1),append(f(Color,*),Colors1,Colors2),query3(q,q_append,Color,Position),get_color(Colors2,Position,X).
-answer(X):-scene(Colors1),reverse(Colors1,Colors,Colors2),query2(q,q_reverse,Position),get_color(Colors2,Position,X).
-answer(X):-scene(Colors1),sort(Colors1,Colors2),query2(q,q_sort,Position),get_color(Colors2,Position,X).

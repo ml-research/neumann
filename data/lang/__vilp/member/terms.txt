@@ -1,0 +1,1 @@
+objects:f(obj6,*),f(obj5,f(obj6,*)),f(obj4,f(obj5,f(obj6,*))),f(obj3,f(obj4,f(obj5,f(obj6,*)))),f(obj2,f(obj3,f(obj4,f(obj5,f(obj6,*)))))

@@ -1,0 +1,8 @@
+append(f(red,*),*,f(red,*)).
+append(f(cyan,*),*,f(cyan,*)).
+append(f(gray,*),*,f(gray,*)).
+append(f(yellow,*),*,f(yellow,*)).
+append(*,f(red,*),f(red,*)).
+append(*,f(cyan,*),f(cyan,*)).
+append(*,f(gray,*),f(gray,*)).
+append(*,f(yellow,*),f(yellow,*)).

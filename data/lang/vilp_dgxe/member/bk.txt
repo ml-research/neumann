@@ -1,0 +1,4 @@
+member(red,f(red,*)).
+member(gray,f(gray,*)).
+member(cyan,f(cyan,*)).
+member(yellow,f(yellow,*)).

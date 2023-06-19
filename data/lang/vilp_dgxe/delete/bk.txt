@@ -1,0 +1,4 @@
+delete(red,f(red,*),*).
+delete(cyan,f(cyan,*),*).
+delete(gray,f(gray,*),*).
+delete(yellow,f(yellow,*),*).

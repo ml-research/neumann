@@ -1,0 +1,1 @@
+kp(X):-in(O1,X),in(O2,X),color(O1,red),shape(O1,triangle),diff_color_pair(O1,O2),diff_shape_pair(O1,O2).

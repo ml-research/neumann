@@ -1,0 +1,10 @@
+delete:3:color,colors,colors
+perm:2:colors,colors
+is_sorted:1:colors
+sort:2:colors,colors
+scene_img1:1:colors
+scene_img2:1:colors
+pos:2:image,image
+chain_img1:1:objects_img1
+chain_img2:1:objects_img2
+smaller:2:color,color

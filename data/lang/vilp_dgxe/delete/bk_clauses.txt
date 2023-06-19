@@ -1,0 +1,11 @@
+# parse
+scene_img1(C):-color_img1(O1,C).
+scene_img2(f(C1,f(C2,f(C3,*)))):-chain_img2(g(O1,g(O2,g(O3,**)))),color_img2(O1,C1),color_img2(O2,C2),color_img2(O3,C3).
+scene_img3(f(C1,f(C2,*))):-chain_img3(h(O1,h(O2,***))),color_img3(O1,C1),color_img3(O2,C2).
+
+# chain of objects
+chain_img2(g(O1,g(O2,g(O3,**)))):-left_of_img2(O1,O2),left_of_img2(O2,O3).
+chain_img3(h(O1,h(O2,***))):-left_of_img3(O1,O2).
+
+# classification
+pos(img1,img2,img3):-scene_img1(C),scene_img2(Cs1),scene_img3(Cs2),delete(C,Cs1,Cs2).

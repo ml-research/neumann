@@ -1,0 +1,8 @@
+# parse the visual scene as a list of colors
+scene(f(Color1,f(Color2,f(Color3,*)))):-chain(g(Object1,g(Object2,g(Object3,**)))),color(Object1,Color1),color(Object2,Color2),color(Object3,Color3).
+scene_2(f(Color1,f(Color2,*))):-chain(g(Object1,g(Object2,g(Object3,**)))),color(Object1,Color1),color(Object2,Color2).
+scene_1(f(Color1,*)):-chain(g(Object1,**)),color(Object1,Color1).
+# generate a chain of objects from an image
+chain(g(Object1,g(Object2,g(Object3,**)))):-left_of(Object1,Object2),left_of(Object2,Object3).
+chain_2(g(Object1,g(Object2,**))):-left_of(Object1,Object2).
+chain_1(g(Object1,**)):-color(Object1,Color1).

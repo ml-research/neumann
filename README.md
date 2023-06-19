@@ -27,6 +27,11 @@ In the second task, the agent needs to apply the learned programs to new situati
 
 [Behind-the-Scenes: A repository for the generation of visual scenes and queries for the behind-the-scenes task.](https://github.com/ml-research/behind-the-scenes)
 
+# Experiments
+To run experiments, use the following commands.
 
+```
+
+```
 # LICENSE
 See [LICENSE](./LICENSE). The [src/yolov5](./src/yolov5) folder is following [GPL3](./src/yolov5/LICENSE) license.

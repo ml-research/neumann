@@ -116,16 +116,14 @@ class SlotAttentionPerceptionModule(nn.Module):
 
     def forward(self, imgs):
         Z = self.model(imgs)
-        return Z
-        """
+        # return Z
         # sort the output of slot attention w.r.t objectness and take top-e outputs
         sorted, indices = torch.sort(Z[:,:,0], descending=True)
         indices_e = indices[:, :self.e]
 
         indices = indices_e.unsqueeze(-1).expand((-1, -1, Z.size(2)))
         return torch.gather(Z, 1, indices)
-        """
-
+        
 
 class SlotAttentionMultiScenesPerceptionModule(nn.Module):
     """A perception module using Slot Attention.

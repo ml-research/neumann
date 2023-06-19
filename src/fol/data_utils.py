@@ -122,6 +122,8 @@ class DataUtils(object):
         in_dtypes = [DataType(in_dtype) for in_dtype in in_dtypes]
         out_dtype = DataType(out_dtype)
         return FuncSymbol(name, int(arity), in_dtypes, out_dtype)
+    
+    
 
     def parse_const(self, line):
         """Parse string to constants.
@@ -148,6 +150,9 @@ class DataUtils(object):
         return terms
         #return [Const(const_name, dtype) for const_name in const_names]
 
+    def parse_clause(self, clause_str, lang):
+        tree = self.lp_clause.parse(clause_str)
+        return ExpTree(lang).transform(tree)
 
     def get_clauses(self, lang):
         return self.load_clauses(self.base_path + 'clauses.txt', lang)

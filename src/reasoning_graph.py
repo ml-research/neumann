@@ -117,7 +117,7 @@ class ReasoningGraphModule(object):
         # print('Grounding Clause: ', clause)
         # TODO: Do we need head unification????
         if len(clause.all_vars()) == 0:
-            print("Grounding completed with {} substitutions!: {}".format(0, str(clause)))
+            # print("Grounding completed with {} substitutions!: {}".format(0, str(clause)))
             return [clause]
         else:
             theta_list = generate_substitutions([clause.head] + clause.body, self.terms, self.max_term_depth)
@@ -133,7 +133,7 @@ class ReasoningGraphModule(object):
                         Clause(ground_head, ground_body))
 
             ground_clauses = self._remove_redundunt_ground_clauses(ground_clauses)
-            print("Grounding completed with {} substitutions: {}.".format(len(theta_list), str(clause)))
+            # print("Grounding completed with {} substitutions: {}.".format(len(theta_list), str(clause)))
             return ground_clauses
 
     def _build_rg(self):

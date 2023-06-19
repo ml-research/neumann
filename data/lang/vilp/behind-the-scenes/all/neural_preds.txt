@@ -1,0 +1,4 @@
+color:2:object,color
+left_of:2:object,object
+query2:3:query,query_type,position
+query3:4:query,query_type,color,position

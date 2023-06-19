@@ -118,33 +118,32 @@ def atoms_to_ILASP_text(atoms_list):
     for atoms, label, id in atoms_list:
         # positive example
         if label == 1:
-            # text = "#pos(" + "{}@1".format(id) +",{}, {},{\n" # penalty 1
-            text = '#pos(eg(id{0})@{1}, {{ {2} }}, {{ {3} }}, {{\n'.format(id, 1, "", "")
+            #text = "#pos(" + "{}@1".format(id) +",{}, {},{\n" # penalty 1
+            text = '#pos(eg(id{0})@{1}, {{ {2} }}, {{ {3} }}, {{\n'.format(id, 1, "kp(img)", "")
+            #text = '#pos({{{0}}}, {{{1}}}, {{\n'.format("kp(img)", "")
             for atom in atoms:
-                text += str(atom)
-                text += "." #\n"
+                if not str(atom) == 'kp(img)':
+                    text += str(atom)
+                    text += ".\n" #\n"
             text += "})."#\n\n"
             texts.append(text.replace('.(__T__).', ''))
             # whole_text += "}).\n\n"
         # negative example
         elif label == 0:
-            0
-            # text = "#neg(" + "{}@1".format(id) +",{}, {},{\n" # penalty 1
-            """
-            text = '#neg(eg(id{0})@{1}, {{ {2} }}, {{ {3} }}, {{\n'.format(id, 1, "", "")
+            #text = '#neg({{{0}}}, {{{1}}}, {{\n'.format("", "")
+            text = '#neg(eg(id{0})@{1}, {{ {2} }}, {{ {3} }}, {{\n'.format(id, 1, "kp(img)", "")
+            #text = '#neg({{{0}}}, {{{1}}}, {{\n'.format("kp(img)", "")
             for atom in atoms:
-                text += str(atom)
-                text += "." # \n"
-            text += "})." #.\n\n"
+                if not str(atom) == 'kp(img)':
+                    text += str(atom)
+                    text += ".\n" #\n"
+            text += "})."#\n\n"
             texts.append(text.replace('.(__T__).', ''))
-            """
-            #whole_text += text
-            #whole_text += "}).\n\n"
     return texts   
     #return whole_text.replace('.(__T__).\n', '')
 
 
-def predict(NEUMANN, I2F, loader, atoms, args, device,  th=None, split='train'):
+def train_ilasp(NEUMANN, I2F, loader, atoms, args, device,  th=None, split='train'):
     predicted_list = []
     target_list = []
 
@@ -168,11 +167,11 @@ def predict(NEUMANN, I2F, loader, atoms, args, device,  th=None, split='train'):
         V_0 = I2F(imgs)
         # V_T = NEUMANN(V_0)
         #  print('target set: ', target_set)
-        # NEUMANN.print_valuation_batch(V_T)
+        # NEUMANN.print_valuation_batch(V_0)
         ilp_examples_batch = valuation_to_ILP_example_batch(V_0, atoms, target_set, example_ids)
         ilp_examples.extend(ilp_examples_batch)
+
     
-    print(ilp_examples)
     ilp_sess = ILASPSession(examples=ilp_examples, background_knowledge=background_knowledge, mode_declarations=mode_declarations)
     cached_lt_file = 'ilasp_cache/{}_ilpasp_cache.txt'.format(args.dataset)
     # cached_lt_file = cache_dir+'/learning_tasks/'+net_type+'/'+d+'/'+cached_lt_file_name
@@ -184,12 +183,34 @@ def predict(NEUMANN, I2F, loader, atoms, args, device,  th=None, split='train'):
     reasoning_time = time.time() - start
     print('Reasoning Time: ', reasoning_time)
     print('Learned rules: ', learned_rules)
-
+    """kp(img) :- shape(V1,sphere); color(V1,blue); color(V2,yellow).
+       kp(img) :- color(V1,yellow); color(V2,blue); not shape(V2,cylinder). 
     """
+    rule = learned_rules.replace(' ', '').replace(';', ',').replace('kp(img)', 'kp(X)') #.replace('\n','').replace('%','')
+    return rule, reasoning_time
+
+def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
+    predicted_list = []
+    target_list = []
+    count = 0
+
+    for i, sample in tqdm(enumerate(loader, start=0)):
+        # to cuda
+        imgs, target_set = map(lambda x: x.to(device), sample)
+        target_set = target_set.float()
+
+        # infer and predict the target probability
+        V_0 = I2F(imgs)
+        V_T = NEUMANN(V_0)
+        predicted = get_prob(V_T, NEUMANN, args)
+        predicted_list.append(predicted.detach())
+        target_list.append(target_set.detach())
+        count += V_T.size(0)  # batch size
+
     predicted = torch.cat(predicted_list, dim=0).detach().cpu().numpy()
     target_set = torch.cat(target_list, dim=0).to(
         torch.int64).detach().cpu().numpy()
-    
+
     if th == None:
         fpr, tpr, thresholds = roc_curve(target_set, predicted, pos_label=1)
         accuracy_scores = []
@@ -210,14 +231,12 @@ def predict(NEUMANN, I2F, loader, atoms, args, device,  th=None, split='train'):
         print('threshold: ', max_accuracy_threshold)
         print('recall: ', rec_score)
 
-        return max_accuracy, rec_score, max_accuracy_threshold, reasoning_time
+        return max_accuracy, rec_score, max_accuracy_threshold
     else:
         accuracy = accuracy_score(target_set, [m > th for m in predicted])
         rec_score = recall_score(
             target_set,  [m > th for m in predicted], average=None)
-        return accuracy, rec_score, th, reasoning_time
-    """
-    return 0, 0, 0, reasoning_time
+        return accuracy, rec_score, th
 
 def to_one_label(ys, labels, th=0.7):
     ys_new = []
@@ -274,43 +293,50 @@ def main(n):
     # get torch data loader
     #question_json_path = 'data/behind-the-scenes/BehindTheScenes_questions_{}.json'.format(args.dataset)
     # test_loader = get_behind_the_scenes_loader(question_json_path, args.batch_size, lang, args.n_data, device)
-    train_loader, val_loader, test_loader = get_data_loader(args, device)
+    train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=args.n_ratio, neg_ratio=args.n_ratio)
 
     NEUMANN, I2F = get_model(lang=lang, clauses=clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
                           program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
                           num_objects=args.num_objects, infer_step=args.infer_step, train=False)#train=not(args.no_train))
 
-    writer.add_scalar("graph/num_atom_nodes", len(NEUMANN.rgm.atom_node_idxs))
-    writer.add_scalar("graph/num_conj_nodes", len(NEUMANN.rgm.conj_node_idxs))
-    num_nodes = len(NEUMANN.rgm.atom_node_idxs) + len(NEUMANN.rgm.conj_node_idxs)
-    writer.add_scalar("graph/num_nodes", num_nodes)
-
-    num_edges = NEUMANN.rgm.edge_index.size(1)
-    writer.add_scalar("graph/num_edges", num_edges)
-
-    writer.add_scalar("graph/memory_total", num_nodes + num_edges)
-
-    print("=====================")
-    print("NUM NODES: ", num_nodes)
-    print("NUM EDGES: ", num_edges)
-    print("MEMORY TOTAL: ", num_nodes + num_edges)
-    print("=====================")
-
-    params = list(NEUMANN.parameters())
-    print('parameters: ', list(params))
-
-    print("Predicting on train data set...")
     times = []
+    val_accs = []
+    test_accs = []
     # train split
     for j in range(n):
-        acc_test, rec_test, th_test, time = predict(
+        train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=args.n_ratio, neg_ratio=args.n_ratio)
+        learned_rule_str, time = train_ilasp(
             NEUMANN, I2F, train_loader, atoms, args, device, th=0.5, split='train')
+        print("=== learned rule string ===")
+        print(learned_rule_str)
+        print("=====")
+        from fol.data_utils import DataUtils
+        du = DataUtils(lark_path, lang_base_path, args.dataset_type, args.dataset)
+        learned_clauses = [du.parse_clause(learned_rule_str, lang)]
         times.append(time)
     
-    with open('out/inference_time/time_clingo_{}_ratio_{}.txt'.format(args.dataset, args.n_ratio), 'w') as f:
-        f.write("\n".join(str(item) for item in times))
+        NEUMANN, I2F = get_model(lang=lang, clauses=learned_clauses, atoms=atoms, terms=terms, bk=bk, bk_clauses=bk_clauses,
+                          program_size=args.program_size, device=device, dataset=args.dataset, dataset_type=args.dataset_type,
+                          num_objects=args.num_objects, infer_step=args.infer_step, train=False)
+        
+        train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=args.n_ratio, neg_ratio=args.n_ratio)
+        
+        acc_val, rec_val, th_val = predict(
+            NEUMANN, I2F, val_loader, args, device, th=None, split='val')
+        val_accs.append(acc_val)
 
-    print("train acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
+        print("val acc: ", acc_val, "threashold: ", th_val, "recall: ", rec_val)
+        acc_test, rec_test, th_test = predict(
+            NEUMANN, I2F, test_loader, args, device, th=th_val, split='test')
+        test_accs.append(acc_test)
+        
+        with open('out/learning_time/time_ilasp_{}_ratio_{}.txt'.format(args.dataset, args.n_ratio), 'w') as f:
+            f.write("\n".join(str(item) for item in times))
+        with open('out/learning_time/validation_accuracy_ilasp_{}_ratio_{}.txt'.format(args.dataset, args.n_ratio), 'w') as f:
+            f.write("\n".join(str(item) for item in val_accs))
+        with open('out/learning_time/test_accuracy_ilasp_{}_ratio_{}.txt'.format(args.dataset, args.n_ratio), 'w') as f:
+            f.write("\n".join(str(item) for item in test_accs))
+
 
 if __name__ == "__main__":
     main(n=5)

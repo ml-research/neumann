@@ -21,12 +21,14 @@ class NEUMANN(nn.Module):
         train (bool): The flag to be trained or not.
     """
 
-    def __init__(self, clauses, atoms, message_passing_module, reasoning_graph_module, program_size, device, bk=None, bk_clauses=None, train=False, softmax_tmp=1.0):
+    def __init__(self, clauses, atoms, message_passing_module, reasoning_graph_module, program_size, device, bk=None, bk_clauses=None, train=False, softmax_tmp=1.0, explain=False):
         super().__init__()
         self.atoms = atoms
         self.atom_strs = [str(atom) for atom in self.atoms]
         self.clauses = add_true_atoms(clauses)
-        print(self.clauses)
+        for c in clauses:
+            print(c)
+        # print(self.clauses)
         self.bk = bk
         self.bk_clauses = add_true_atoms(bk_clauses)
         self.mpm = message_passing_module
@@ -44,13 +46,16 @@ class NEUMANN(nn.Module):
         else:
             self.init_ones_weights(clauses, device)
         self.device = device
-        self.print_program()
+        self.explain = explain
+        # self.print_program()
 
 
     def init_ones_weights(self, clauses, device):
         """Initialize the clause weights with fixed weights. All clauses are asuumed to be correct rules.
         """
-        self.clause_weights = torch.ones((len(clauses), ), dtype=torch.float32).to(device)
+        # self.clause_weights = torch.ones((len(clauses), ), dtype=torch.float32).to(device)
+        self.clause_weights = nn.Parameter(torch.ones((len(clauses), ), dtype=torch.float32).to(device))
+        #self.clause_weights = nn.Parameter(torch.Tensor(np.random.rand(program_size, len(clauses))).to(device))
 
     def get_ones_weights(self, clauses, device):
         """Initialize the clause weights with fixed weights. All clauses are asuumed to be correct rules.
@@ -144,16 +149,18 @@ class NEUMANN(nn.Module):
 
     def forward(self, x):
         """Forwarding function for NEUMANN. It proceeds as follows:
-        (1) Computes the node features from a set of probabilistic facts (valuation vector).
+        (1) Computes the node features (probabilities) from a set of probabilistic facts (valuation vector).
         (2) Transforms the node features and a reasoning graph into a graph data (as a batch).
         (3) Computes the indices of atom nodes and conjunction nodes for a graph data extended for the batch.
         (4) Performs the bi-directional message-passing on the graph data.
         Args:
-            x (Tensor): A batch of valuation vectors.
+            x (Tensor): A batch of valuation vectors (probabilities of atoms).
         Return:
-            y (Tensor): A batch of probability vectors of ground atoms.
+            y (Tensor): A batch of valuation vectors (probabilities of atoms and conjunctions) after reasoning.
         """
         batch_size = x.size(0)
+        
+        
 
         # convert probabilistic facts to a node-feature matrix
         x = self._to_attribute_matrix(x.unsqueeze(-1))
@@ -168,7 +175,7 @@ class NEUMANN(nn.Module):
 
         # forwarding to message passing reasoning module
         y = self.mpm(x, clause_weights, self.rgm.edge_clause_index,
-                     self.rgm.edge_type, atom_node_idxs, conj_node_idxs, batch_size)
+                     self.rgm.edge_type, atom_node_idxs, conj_node_idxs, batch_size, explain=self.explain)
         return y
 
     def _get_idxs(self, batch_size):

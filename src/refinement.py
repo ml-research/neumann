@@ -20,13 +20,14 @@ class RefinementGenerator(object):
         max number of atoms in body of clauses
     """
 
-    def __init__(self, lang, mode_declarations, max_depth=1, max_body_len=1, max_var_num=5):
+    def __init__(self, lang, mode_declarations, max_depth=1, max_body_len=1, max_var_num=5, refinement_types=['atom']):
         self.lang = lang
         self.mode_declarations = mode_declarations
         self.vi = 0 # counter for new variable generation
         self.max_depth = max_depth
         self.max_body_len = max_body_len
         self.max_var_num = max_var_num
+        self.refinement_types = refinement_types
 
 
     def _init_recall_counter_dic(self, mode_declarations):
@@ -39,7 +40,9 @@ class RefinementGenerator(object):
         """Return a boolean value that represents the mode declaration can be used or not
         in terms of the recall.
         """
-        return clause.count_by_predicate(mode_declaration.pred) < mode_declaration.recall
+        pred_num = clause.count_by_predicate(mode_declaration.pred)
+        md_recall = mode_declaration.recall
+        return pred_num < md_recall
         #return self.recall_counter_dic[str(mode_declaration)] < mode_declaration.recall
 
     def _increment_recall(self, mode_declaration):
@@ -103,7 +106,8 @@ class RefinementGenerator(object):
                     terms = sorted(terms)
                 new_atom = Atom(modeb.pred, terms)
                 if not new_atom in clause.body:
-                    new_clause = Clause(clause.head, clause.body + [new_atom])
+                    new_body = sorted(clause.body + [new_atom])
+                    new_clause = Clause(clause.head, new_body)
                     # remove tautology
                     if not (len(clause.body)==1 and clause.head == clause.body[0]):
                         C_refined.append(new_clause)
@@ -147,11 +151,15 @@ class RefinementGenerator(object):
 
     def refine_clause(self, clause):
         C_refined = []
-        for modeb in self.mode_declarations:
-            C_refined.extend(self.refine_from_modeb(clause, modeb))
-        C_refined.extend(self.apply_func(clause))
-        C_refined.extend(self.subs_const(clause))
-        C_refined.extend(self.subs_var(clause))
+        if 'atom' in self.refinement_types:
+            for modeb in self.mode_declarations:
+                C_refined.extend(self.refine_from_modeb(clause, modeb))
+        if 'func' in self.refinement_types:
+            C_refined.extend(self.apply_func(clause))
+        if 'const' in self.refinement_types:
+            C_refined.extend(self.subs_const(clause))
+        if 'var' in self.refinement_types:
+            C_refined.extend(self.subs_var(clause))
         # C_refined.extend(self.swap_vars(clause))
         result = self._remove_invalid_clauses(list(set(C_refined)))
         return result

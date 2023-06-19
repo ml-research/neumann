@@ -1,0 +1,8 @@
+is_sorted(*).
+perm(*,*).
+smaller(cyan,gray).
+smaller(cyan,red).
+smaller(cyan,yellow).
+smaller(gray,red).
+smaller(gray,yellow).
+smaller(red,yellow).

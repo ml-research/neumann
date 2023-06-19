@@ -1,0 +1,4 @@
+f:2:color,colors:colors
+g:2:object_img2,objects_img2:objects_img2
+h:2:object_img3,objects_img3:objects_img3
+k:2:object_img1,objects_img1:objects_img1

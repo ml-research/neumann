@@ -1,0 +1,7 @@
+delete:3:color,colors,colors
+scene_img1:1:color
+scene_img2:1:colors
+scene_img3:1:colors
+pos:3:image,image,image
+chain_img2:1:objects_img2
+chain_img3:1:objects_img3

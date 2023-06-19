@@ -1,0 +1,2 @@
+edge:2:node,node
+cyclic:1:node

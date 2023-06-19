@@ -1,0 +1,13 @@
+# parse
+scene_img1(f(C1,f(C2,f(C3,*)))):-chain_img1(g(O1,g(O2,g(O3,**)))),color_img1(O1,C1),color_img1(O2,C2),color_img1(O3,C3).
+scene_img2(f(C1,f(C2,f(C3,*)))):-chain_img2(h(O1,h(O2,h(O3,***)))),color_img2(O1,C1),color_img2(O2,C2),color_img2(O3,C3).
+
+# chain of objects
+chain_img1(g(O1,g(O2,g(O3,**)))):-left_of_img1(O1,O2),left_of_img1(O2,O3).
+chain_img2(h(O1,h(O2,h(O3,***)))):-left_of_img2(O1,O2),left_of_img2(O2,O3).
+
+# classification
+pos(img1,img2):-scene_img1(Cs1),scene_img2(Cs2),reverse(Cs1,Cs,Cs2).
+
+#append(*,X,X):-.
+#append(f(X,Y),Z,f(X,V)):-append(Y,Z,V).

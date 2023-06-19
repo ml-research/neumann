@@ -23,7 +23,7 @@ Reasoning behind the scenes:  The goal of this task is to compute the answer of 
 In the second task, the agent needs to apply the learned programs to new situations to solve queries reasoning about non-observational scenes.
 
 ## How does it work?
-NEUMANN compiles *first-order logic* programs into a *graph neural networks*. Logical entailment is compted using probabilistic atoms and weighted rules using fuzzy logic operations.
+NEUMANN compiles *first-order logic* programs into a *graph neural network*. Logical entailment is compted using probabilistic atoms and weighted rules using fuzzy logic operations.
 ![neumann](./imgs/reasoning_graph.png)
 
 # Relevant Repositories

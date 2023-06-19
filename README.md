@@ -22,16 +22,32 @@ We empirically demonstrate that NEUMANN solves visual reasoning tasks efficientl
 Reasoning behind the scenes:  The goal of this task is to compute the answer of a query, e.g., *``What is the color of the second left-most object after deleting a gray object?''* given a visual scene. To answer this query, the agent needs to reason behind the scenes and understand abstract operations on objects. In the first task, the agent needs to induce an explicit program given visual examples, where each example consists of several visual scenes that describe the input and the output of the operation to be learned. The abstract operations can be described and computed by first-order logic with functors. 
 In the second task, the agent needs to apply the learned programs to new situations to solve queries reasoning about non-observational scenes.
 
+## How does it work?
+NEUMANN compiles *first-order logic* programs into a *graph neural networks*. Logical entailment is compted using probabilistic atoms and weighted rules using fuzzy logic operations.
+![neumann](./imgs/reasoning_graph.png)
+
 # Relevant Repositories
 [Visual ILP: A repository of the dataset generation of CLEVR images for abstract operations.](https://github.com/ml-research/visual-ilp)
 
 [Behind-the-Scenes: A repository for the generation of visual scenes and queries for the behind-the-scenes task.](https://github.com/ml-research/behind-the-scenes)
 
 # Experiments
-To run experiments, use the following commands.
+
+## Prerequisites
+Docker container is available in folder [.devcontainer](./.devcontainer/Dockerfile),
+which is compatible with [packages](./pip_requirements.txt).
 
 ```
-
+pip install pip_requirements.txt
 ```
+
+
+## Scripts
+To run experiments, use
+
+[Learning kandinsky/clevr-hans patterns](./scripts/solve_kandinsky_clevr.sh)
+
+[Solving Behind-the-Scenes](./scripts/solve_behind-the-scenes.sh)
+
 # LICENSE
 See [LICENSE](./LICENSE). The [src/yolov5](./src/yolov5) folder is following [GPL3](./src/yolov5/LICENSE) license.

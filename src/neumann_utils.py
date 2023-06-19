@@ -28,20 +28,8 @@ from valuation import (SlotAttentionValuationModule,
 
 
 def load_reasoning_graph(clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type):
-    if False: # os.path.exists('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)):
-        with open('model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset), 'rb') as f:
-            RGM = pickle.load(f)
-        print("Reasoning Graph loaded!")
-    else:
-        RGM = ReasoningGraphModule(clauses=clauses+bk_clauses, facts=atoms,
-                                   terms=terms, lang=lang, max_term_depth=term_depth, device=device)
-        print("Saving the reasoning graph...")
-        save_folder = 'model/reasoning_graph/'
-        save_path = 'model/reasoning_graph/{}_{}.pickle'.format(dataset_type, dataset)
-        if not os.path.exists(save_folder):
-            os.makedirs(save_folder)
-        with open(save_path, 'wb') as f:
-            pickle.dump(RGM, f)
+    RGM = ReasoningGraphModule(clauses=clauses+bk_clauses, facts=atoms,
+                               terms=terms, lang=lang, max_term_depth=term_depth, device=device)
     return RGM
 
 def update_by_clauses(neumann, clauses, softmax_temp=1.0):
@@ -82,38 +70,6 @@ def update_by_refinement(neumann, clause_scores, clause_generator, softmax_temp=
                    bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
     return NEUM, generated_clauses
 
-def __update_by_refinement(neumann, clause_scores, refinement_generator, softmax_temp=1.0):
-    """Generate new neumann instance by generating and adding new clauses using clause scores.
-    """
-    clauses = neumann._preprocess_clauses(neumann.clauses)
-    #idxs = np.argsort(-clause_scores.cpu().numpy())
-    #print(clause_scores)
-    #print("==== CLAUSE SCORES ===")
-    #for i in idxs:
-    #    print(np.round(clause_scores[i].cpu().numpy(), 3), clauses[i])
-    # print(clause_scores)
-    clauses_to_refine = []
-    for i in range(clause_scores.size(0)):
-        selected_clause_indices = torch.stack([F.gumbel_softmax(clause_scores[i], tau=1.0, hard=True) for j in range(5)])
-        selected_clause_indices, _ = torch.max(selected_clause_indices, dim=0)
-        # selected_clause_indices = [i for i, j in enumerate(selected_clause_indices)]
-        clauses_to_refine_i = [c for i, c in enumerate(clauses) if selected_clause_indices[i] > 0]
-        clauses_to_refine.extend(clauses_to_refine_i)
-    clauses_to_refine = list(set(clauses_to_refine))
-    print('clauses_to_refine: ')
-    for c in clauses_to_refine:
-        print(c)
-    new_gen_clauses = neumann._preprocess_clauses(refinement_generator.refine_clauses(clauses_to_refine))
-    print("New Generated Clause: ", new_clauses)
-    print("clauses: ", clauses)
-    ### Do we need old clauses?? too general clauses should be excluded
-    new_clauses = sorted(list(set(clauses + new_gen_clauses)))
-
-    RGM = ReasoningGraphModule(clauses=new_clauses+neumann.bk_clauses, facts=neumann.atoms,
-                               terms=neumann.rgm.terms, lang=neumann.rgm.lang, max_term_depth=neumann.rgm.max_term_depth, device=neumann.device)
-    NEUM = NEUMANN(atoms=neumann.atoms, clauses=new_clauses, message_passing_module=neumann.mpm, reasoning_graph_module=RGM,
-                   bk=neumann.bk, bk_clauses=neumann.bk_clauses, device=neumann.device, program_size=neumann.program_size, train=neumann.train, softmax_tmp=softmax_temp)
-    return NEUM, new_gen_clauses
 
 
 

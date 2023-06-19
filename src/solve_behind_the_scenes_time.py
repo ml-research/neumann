@@ -1,5 +1,4 @@
 import argparse
-import pickle
 import time
 
 import numpy as np
@@ -10,21 +9,13 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from logic_utils import get_lang
-from mode_declaration import get_mode_declarations
-from neumann_utils import (get_behind_the_scenes_loader, get_clause_evaluator,
-                           get_model, get_prob)
-from tensor_encoder import TensorEncoder
-
-# from nsfr_utils import save_images_with_captions, to_plot_images_clevr, generate_captions
-
+from neumann_utils import get_behind_the_scenes_loader, get_model, get_prob
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch-size", type=int, default=2,
+    parser.add_argument("--batch-size", type=int, default=64,
                         help="Batch size to infer with")
-    parser.add_argument("--batch-size-bs", type=int,
-                        default=1, help="Batch size in beam search")
     parser.add_argument("--num-objects", type=int, default=3,
                         help="The maximum number of objects in one image")
     parser.add_argument("--dataset", default="delete")  # , choices=["member"])
@@ -33,33 +24,14 @@ def get_args():
                         help='cuda device, i.e. 0 or cpu')
     parser.add_argument("--no-cuda", action="store_true",
                         help="Run on CPU instead of GPU (not recommended)")
-    parser.add_argument("--no-train", action="store_true",
-                        help="Perform prediction without training model")
-    parser.add_argument("--small-data", action="store_true",
-                        help="Use small training data.")
     parser.add_argument("--num-workers", type=int, default=0,
                         help="Number of threads for data loader")
     parser.add_argument('--gamma', default=0.01, type=float,
                         help='Smooth parameter in the softor function')
     parser.add_argument("--plot", action="store_true",
                         help="Plot images with captions.")
-    parser.add_argument("--t-beam", type=int, default=4,
-                        help="Number of rule expantion of clause generation.")
-    parser.add_argument("--n-beam", type=int, default=5,
-                        help="The size of the beam.")
-    parser.add_argument("--n-max", type=int, default=50,
-                        help="The maximum number of clauses.")
-    parser.add_argument("--program-size", type=int, default=1,
-                        help="The size of the logic program.")
-    #parser.add_argument("--n-obj", type=int, default=2, help="The number of objects to be focused.")
-    parser.add_argument("--epochs", type=int, default=20,
-                        help="The number of epochs.")
-    parser.add_argument("--lr", type=float, default=1e-2,
-                        help="The learning rate.")
     parser.add_argument("--n-data", type=int, default=10000,
                         help="The number of data to be used.")
-    parser.add_argument("--pre-searched", action="store_true",
-                        help="Using pre searched clauses.")
     parser.add_argument("--infer-step", type=int, default=6,
                         help="The number of steps of forward reasoning.")
     parser.add_argument("--term-depth", type=int, default=3,
@@ -68,17 +40,6 @@ def get_args():
     args = parser.parse_args()
     return args
 
-# def get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False):
-
-
-def discretise_NEUMANN(NEUMANN, args, device):
-    lark_path = 'src/lark/exp.lark'
-    lang_base_path = 'data/lang/'
-    lang, clauses_, bk, terms, atoms = get_lang(
-        lark_path, lang_base_path, args.dataset_type, args.dataset, args.term_depth)
-    # Discretise NEUMANN rules
-    clauses = NEUMANN.get_clauses()
-    return get_nsfr_model(args, lang, clauses, atoms, bk, bk_clauses, device, train=False)
 
 
 def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
@@ -183,10 +144,6 @@ def main(n):
     # Start the RTPT tracking
     rtpt.start()
 
-
-    ## train_pos_loader, val_pos_loader, test_pos_loader = get_vilp_pos_loader(args)
-    #####train_pos_loader, val_pos_loader, test_pos_loader = get_data_loader(args)
-
     # load logical representations
     lark_path = 'src/lark/exp.lark'
     lang_base_path = 'data/lang/'
@@ -236,5 +193,5 @@ def main(n):
     print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
 
 if __name__ == "__main__":
-    main(n=6)
+    main(n=1)
 

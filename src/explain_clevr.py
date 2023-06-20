@@ -7,18 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from rtpt import RTPT
-from sklearn.metrics import accuracy_score, recall_score, roc_curve
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from explanation_utils import *
 from logic_utils import get_lang
-from mode_declaration import get_mode_declarations
-from neumann_utils import (get_clause_evaluator, get_data_loader, get_model,
-                           get_prob)
-from tensor_encoder import TensorEncoder
-
-# from nsfr_utils import save_images_with_captions, to_plot_images_clevr, generate_captions
+from neumann_utils import get_data_loader, get_model, get_prob
 
 torch.set_num_threads(10)
 

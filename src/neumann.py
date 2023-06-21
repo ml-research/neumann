@@ -26,9 +26,6 @@ class NEUMANN(nn.Module):
         self.atoms = atoms
         self.atom_strs = [str(atom) for atom in self.atoms]
         self.clauses = add_true_atoms(clauses)
-        for c in clauses:
-            print(c)
-        # print(self.clauses)
         self.bk = bk
         self.bk_clauses = add_true_atoms(bk_clauses)
         self.mpm = message_passing_module
@@ -53,9 +50,7 @@ class NEUMANN(nn.Module):
     def init_ones_weights(self, clauses, device):
         """Initialize the clause weights with fixed weights. All clauses are asuumed to be correct rules.
         """
-        # self.clause_weights = torch.ones((len(clauses), ), dtype=torch.float32).to(device)
         self.clause_weights = nn.Parameter(torch.ones((len(clauses), ), dtype=torch.float32).to(device))
-        #self.clause_weights = nn.Parameter(torch.Tensor(np.random.rand(program_size, len(clauses))).to(device))
 
     def get_ones_weights(self, clauses, device):
         """Initialize the clause weights with fixed weights. All clauses are asuumed to be correct rules.
@@ -65,7 +60,6 @@ class NEUMANN(nn.Module):
     def init_random_weights(self, program_size, clauses, device):
         """Initialize the clause weights with a random initialization.
         """
-        # return nn.Parameter(torch.Tensor(np.random.normal(size=(program_size, len(clauses)))).to(device))
         self.clause_weights = nn.Parameter(torch.Tensor(np.random.rand(program_size, len(clauses))).to(device))
 
     def _softmax_clauses(self, clause_weights):
@@ -159,8 +153,6 @@ class NEUMANN(nn.Module):
             y (Tensor): A batch of valuation vectors (probabilities of atoms and conjunctions) after reasoning.
         """
         batch_size = x.size(0)
-        
-        
 
         # convert probabilistic facts to a node-feature matrix
         x = self._to_attribute_matrix(x.unsqueeze(-1))
@@ -327,9 +319,3 @@ class NEUMANN(nn.Module):
                     #t ext += '.\n'
             text_list.append(text)
         return text_list
-              
-
-
-
-
-

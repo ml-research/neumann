@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from rtpt import RTPT
 from sklearn.metrics import accuracy_score, recall_score, roc_curve
+from tensor_encoder import TensorEncoder
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -21,7 +22,6 @@ from neumann_utils import (generate_captions, get_data_loader, get_model,
                            to_plot_images_clevr, to_plot_images_kandinsky,
                            update_by_clauses, update_by_refinement)
 from refinement import RefinementGenerator
-from tensor_encoder import TensorEncoder
 from visualize import plot_reasoning_graph
 
 
@@ -246,15 +246,11 @@ def main(n):
     name = 'rgnn/' + args.dataset + '/' + str(n)
     writer = SummaryWriter(f"runs/{name}", purge_step=0)
 
-
-
-
     # Create RTPT object
     rtpt = RTPT(name_initials='HS', experiment_name="NEUM_{}".format(args.dataset),
                 max_iterations=args.epochs)
     # Start the RTPT tracking
     rtpt.start()
-
 
     times = []
     val_accs = []
@@ -296,25 +292,10 @@ def main(n):
         print("NUM NODES: ", num_nodes)
         print("NUM EDGES: ", num_edges)
         print("MEMORY TOTAL: ", num_nodes + num_edges)
-        # save the reasoning graph
-
-
-        # CHECK memory of tensors
-        """Check memoru of tensors.
-        print('check tensors.. ')
-        te = TensorEncoder(lang, atoms, clauses+bk_clauses, device, NEUMANN.rgm)
-        I = te.encode()
-        print(I)
-        print(I.size())
-        print("TENSOR MEMORY: ", I.size(0) * I.size(1) * I.size(2) * I.size(3))
-        I = I.expand(args.batch_size, -1, -1, -1, -1)
-        print("TENSOR MEMORY BATCH: ", I.size(0) * I.size(1) * I.size(2) * I.size(3) * I.size(4))
-        """
 
         trial = 0
         params = list(NEUMANN.parameters())
         optimizer = torch.optim.RMSprop(params, lr=args.lr)
-        # clause_scores = torch.ones((args.program_size, len(NEUMANN.clauses, ))).to(device)
 
         #too_simple_clauses = clauses
         softmax_temp = 1e-1
@@ -331,7 +312,6 @@ def main(n):
             # generate clauses on positive examples
             pos_ratio = args.pos_ratio
             neg_ratio = 0.0 # pos_ratio * 0.01  #0.0
-            #neg_ratio =  min(0.2*(trial+1), 1.0)
             train_loader, val_loader, test_loader = get_data_loader(args, device, pos_ratio=args.pos_ratio, neg_ratio=0.0)
             # clause_generator.print_tree()
             params = list(NEUMANN.parameters())
@@ -350,7 +330,6 @@ def main(n):
         print("generated clauses: ")
         for c in final_clauses:
             print(c)
-
 
         # finalize learninga
         clauses = [c for c in final_clauses if len(c.body) >= args.min_body_len and len(c.all_vars()) <= args.max_var]

@@ -12,7 +12,6 @@ class SoftLogic(object):
 
     def _or(self, x):
         return softor(x, dim=0, gamma=0.01)
-        # return softor(x, dim=0, gamma=0.012)
 
     def _and(self, x):
         return torch.prod(x, dim=0)

@@ -23,21 +23,22 @@ class ModeDeclaration(object):
     Here is an example containing a structured ModeType:
     To make this more clear, here is an example for the mode declarations for
     the grandfather task from
-     above::- modeh(1, grandfather(+human, +human)).:-
-      modeb(*, parent(-human, +human)).:-
-       modeb(*, male(+human)).
-       The  first  mode  states  that  the  head  of  the  rule
-        (and  therefore  the  targetpredicate) will be the atomgrandfather.
-         Its parameters have to be of the typehuman.
-          The  +  annotation  says  that  the  rule  head  needs  two  variables.
-            Thesecond mode declaration states theparentatom and declares again
-             that theparameters have to be of type human.
-              Here,  the + at the second parametertells, that the system is only allowed to
-              introduce the atomparentin the clauseif it already contains a variable of type human.
-               The−at the first attribute in-troduces a new variable into the clause.
+    above::- modeh(1, grandfather(+human, +human)).:-
+    modeb(*, parent(-human, +human)).:-
+    modeb(*, male(+human)).
+    The  first  mode  states  that  the  head  of  the  rule
+    (and  therefore  the  targetpredicate) will be the atomgrandfather.
+    Its parameters have to be of the typehuman.
+    The  +  annotation  says  that  the  rule  head  needs  two  variables.
+    Thesecond mode declaration states theparentatom and declares again
+    that theparameters have to be of type human.
+    Here,  the + at the second parametertells, that the system is only allowed to
+    introduce the atomparentin the clauseif it already contains a variable of type human.
+    The first attribute introduces a new variable into the clause.
     The  modes  consist  of  a  recall n that  states  how  many  versions  of  the
     literal are allowed in a rule and an atom with place-markers that state the literal to-gether
     with annotations on input- and output-variables as well as constants (see[Mug95]).
+
     Args:
         recall (int): The recall number i.e. how many times the declaration can be instanciated
         pred (Predicate): The predicate.

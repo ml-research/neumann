@@ -110,19 +110,13 @@ class ReasoningGraphModule(object):
         return all_ground_clauses, all_clause_indices
     
     def _ground_clause(self, clause):
-        #if str(clause) in self.grounding_casche:
-        #if clause in self.clause_casche:
-        #    print("Grounding is already in the casche!: {}".format(clause))
-        #    return self.grounding_casche[str(clause)]
-        # print('Grounding Clause: ', clause)
-        # TODO: Do we need head unification????
+        """Produce all ground clauses given a clause.
+        """
         if len(clause.all_vars()) == 0:
             # print("Grounding completed with {} substitutions!: {}".format(0, str(clause)))
             return [clause]
         else:
             theta_list = generate_substitutions([clause.head] + clause.body, self.terms, self.max_term_depth)
-            #assert len(theta_list) < 1000000, "Too many substitutions for:{}.".format(str(clause))
-            # print("{} substitutions to ground!".format(len(theta_list)))
             ground_clauses = []
             for i, theta in enumerate(theta_list):
                 ground_head = subs_list(clause.head, theta)
@@ -133,14 +127,10 @@ class ReasoningGraphModule(object):
                         Clause(ground_head, ground_body))
 
             ground_clauses = self._remove_redundunt_ground_clauses(ground_clauses)
-            # print("Grounding completed with {} substitutions: {}.".format(len(theta_list), str(clause)))
             return ground_clauses
 
     def _build_rg(self):
-        """
-        Build reasoning graph from clauses.
-
-        TODO: get node logical objects? facts or conjunction.
+        """Build reasoning graph from clauses.
         """
 
         # print('Building Reasoning Graph...')

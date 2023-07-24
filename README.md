@@ -75,7 +75,7 @@ For example, in the container, learning Kandinsky patterns on red triangle using
 cd /neumann
 python3 src/train_neumann.py --dataset-type kandinsky --dataset red-triangle --num-objects 6 --batch-size 12 --no-cuda --epochs 30 --infer-step 4 --trial 5 --n-sample 10 --program-size 1  --max-var 6 --min-body-len 6 --pos-ratio 1.0 --neg-ratio 1.0
 ```
-An exanplary log can be found [redtrianlge_log.txt](./logs/redtriangle_log.txt).
+An exenplary log can be found [redtrianlge_log.txt](./logs/redtriangle_log.txt).
 
 More scripts are available:
 

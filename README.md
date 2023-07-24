@@ -42,6 +42,7 @@ pytorch
 torch-geometric 
 networkx
 ```
+We used Python 3.8 for the experiments.
 See [Dockerfile](.devcontainer/Dockerfile) for more details.
 
 ## Build a Docker container

@@ -9,7 +9,6 @@ import numpy as np
 import torch
 from rtpt import RTPT
 from sklearn.metrics import accuracy_score, recall_score, roc_curve
-from tensor_encoder import TensorEncoder
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -97,15 +96,15 @@ def predict(NEUMANN, I2F, loader, args, device,  th=None, split='train'):
         predicted = get_prob(V_T, NEUMANN, args)
         predicted_list.append(predicted.detach())
         target_list.append(target_set.detach())
-        if args.plot:
-            if args.dataset_type == 'kandinsky':
-                imgs = to_plot_images_kandinsky(imgs.squeeze(1))
-            else:
-                imgs = to_plot_images_clevr(imgs.squeeze(1))
-            captions = generate_captions(
-                V_T, NEUMANN.atoms, I2F.pm.e, th=0.3)
-            save_images_with_captions(
-                imgs, captions, folder='result/{}/'.format(args.dataset_type) + args.dataset + '/' + split + '/', img_id_start=count, dataset=args.dataset)
+        # if args.plot:
+        #     if args.dataset_type == 'kandinsky':
+        #         imgs = to_plot_images_kandinsky(imgs.squeeze(1))
+        #     else:
+        #         imgs = to_plot_images_clevr(imgs.squeeze(1))
+        #     captions = generate_captions(
+        #         V_T, NEUMANN.atoms, I2F.pm.e, th=0.3)
+        #     save_images_with_captions(
+        #         imgs, captions, folder='result/{}/'.format(args.dataset_type) + args.dataset + '/' + split + '/', img_id_start=count, dataset=args.dataset)
         count += V_T.size(0)  # batch size
 
     predicted = torch.cat(predicted_list, dim=0).detach().cpu().numpy()
@@ -193,7 +192,8 @@ def train_neumann(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_
 def eval_clauses(args, NEUMANN, I2F, optimizer, train_loader, val_loader, test_loader, device, writer, rtpt, trial):
     bce = torch.nn.BCELoss()
     # coefficient for the clause scores (sum of gradients)
-    beta = 10000
+    # beta = 10000
+    beta = 100
     iteration = 0
     clause_scores = torch.zeros(len(NEUMANN.clauses, )).to(device)
 
@@ -243,7 +243,7 @@ def main(n):
         device = torch.device('cuda:' + args.device)
 
     print('device: ', device)
-    name = 'rgnn/' + args.dataset + '/' + str(n)
+    name = 'neumann/' + args.dataset + '/' + str(n)
     writer = SummaryWriter(f"runs/{name}", purge_step=0)
 
     # Create RTPT object
@@ -366,12 +366,12 @@ def main(n):
 
         print("val acc: ", acc_val, "threashold: ", th_val, "recall: ", rec_val)
         print("test acc: ", acc_test, "threashold: ", th_test, "recall: ", rec_test)
-        with open('out/learning_time/time_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
-            f.write("\n".join(str(item) for item in times))
-        with open('out/learning_time/validation_accuracy_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
-            f.write("\n".join(str(item) for item in val_accs))
-        with open('out/learning_time/test_accuracy_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
-            f.write("\n".join(str(item) for item in test_accs))
+        # with open('out/learning_time/time_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
+        #     f.write("\n".join(str(item) for item in times))
+        # with open('out/learning_time/validation_accuracy_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
+        #     f.write("\n".join(str(item) for item in val_accs))
+        # with open('out/learning_time/test_accuracy_neumann_{}_ratio_{}.txt'.format(args.dataset, args.pos_ratio), 'w') as f:
+        #     f.write("\n".join(str(item) for item in test_accs))
 
 
 def seed_everything(seed=42):

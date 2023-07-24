@@ -26,9 +26,9 @@
         "workspaceFolder": "/workspace"
     },
     "runArgs": [
-        "--gpus",
-        "all",
+        //        "--gpus",
+        //        "all",
         "--shm-size",
-        "1000gb"
+        "2gb"
     ]
 }

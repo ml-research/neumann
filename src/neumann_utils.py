@@ -12,16 +12,13 @@ import data_kandinsky
 import data_vilp
 from facts_converter import FactsConverter, FactsConverterWithQuery
 from img2facts import Img2Facts, Img2FactsWithQuery
-from infer import InferModule
 from logic_utils import add_true_atom
 from message_passing import MessagePassingModule
 from neumann import NEUMANN
-from nsfr import NSFReasoner
 from percept import (SlotAttentionLessColorsPerceptionModule,
                      SlotAttentionPerceptionModule, YOLOPerceptionModule)
 from reasoning_graph import ReasoningGraphModule
 from soft_logic import SoftLogic
-from tensor_encoder import TensorEncoder
 from valuation import (SlotAttentionValuationModule,
                        SlotAttentionWithQueryValuationModule,
                        YOLOValuationModule)
@@ -122,77 +119,6 @@ def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device,
     NEUM = NEUMANN(atoms=atoms, clauses=clauses, message_passing_module=MPM, reasoning_graph_module=RGM,
                    bk=bk, bk_clauses=bk_clauses, device=device, program_size=program_size, train=train, explain=explain)
     return NEUM, I2F
-
-def get_tensor_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device, dataset, dataset_type, num_objects, term_depth=3, infer_step=10, train=False):
-    if dataset_type in ['synthetic']:
-        RGM = load_reasoning_graph(
-            clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type)
-        # node feature module
-        # build Reasoning GNN
-        soft_logic = SoftLogic()
-        # (in_channels=args.node_dim, out_channels=len(atoms)
-        MPM = MessagePassingModule(soft_logic, device, T=infer_step)
-        NEUM = NEUMANN(atoms=atoms, clauses=clauses, message_passing_module=MPM, reasoning_graph_module=RGM,
-                   bk=bk, bk_clauses=bk_clauses, device=device, program_size=program_size, train=train)
-        return NEUM
-    elif dataset_type in ['vilp', 'clevr-hans']:
-        print("Loading SlotAttention Perception Module...")
-        PM = SlotAttentionPerceptionModule(
-            e=num_objects, d=19, device=device).to(device)
-        VM = SlotAttentionValuationModule(lang=lang, device=device)
-        FC = FactsConverter(lang=lang, atoms=atoms, bk=bk, perception_module=PM,
-                        valuation_module=VM, device=device)
-        I2F = Img2Facts(perception_module=PM, facts_converter=FC,
-                        atoms=atoms, bk=bk, device=device)
-    elif dataset_type in ['behind-the-scenes']:
-        print("Loading SlotAttention Perception Module...")
-        PM = SlotAttentionLessColorsPerceptionModule(
-            e=num_objects, d=19, device=device).to(device)
-        VM = SlotAttentionWithQueryValuationModule(lang=lang, device=device)
-        FC = FactsConverterWithQuery(lang=lang, atoms=atoms, bk=bk, perception_module=PM,
-                        valuation_module=VM, device=device)
-        I2F = Img2FactsWithQuery(perception_module=PM, facts_converter=FC,
-                        atoms=atoms, bk=bk, device=device)
-    else:
-        print("Loading YOLO Perception Module...")
-        PM = YOLOPerceptionModule(e=num_objects, d=11, device=device)
-        VM = YOLOValuationModule(lang=lang, device=device, dataset=dataset)
-        FC = FactsConverter(lang=lang, perception_module=PM,
-                        valuation_module=VM, device=device)
-        I2F = Img2Facts(perception_module=PM, facts_converter=FC,
-                        atoms=atoms, bk=bk, device=device)
-    # build reasoning graph
-    # RGM = ReasoningGraphModule(clauses=clauses+bk_clauses, facts=atoms, terms=terms, lang=lang, device=device)
-    RGM = load_reasoning_graph(
-        clauses, bk_clauses, atoms, terms, lang, term_depth, device, dataset, dataset_type)
-    # node feature module
-    # build Reasoning GNN
-    soft_logic = SoftLogic()
-    # (in_channels=args.node_dim, out_channels=len(atoms)
-    MPM = MessagePassingModule(soft_logic, device, T=infer_step)
-    print('Building index tensors ...')
-    device = torch.device('cpu')
-    te = TensorEncoder(lang, atoms, clauses, terms=terms, max_term_depth=term_depth, device=device)
-    I = te.encode()
-    I.to(device)
-    te_bk = TensorEncoder(lang, atoms, bk_clauses, terms=terms, max_term_depth=term_depth, device=device)
-    I_bk = te_bk.encode()
-    I_bk.to(device)
-    print("Index tensor I has been built!: ", I.size())
-    print("Index tensor I_bk has been built!: ", I_bk.size())
-    IM = InferModule(I=I, m=program_size, infer_step=infer_step, I_bk=I_bk, device=device)
-    NSFR = NSFReasoner(PM, FC, IM, IM, atoms, bk, clauses, train=False)
-    return NSFR, I2F
-
-def __get_img2fact(lang, atoms, bk, device):
-    PM = SlotAttentionPerceptionModule(e=5, d=19, device=device)
-    VM = SlotAttentionValuationModule(lang=lang, device=device)
-    FC = FactsConverter(lang=lang, perception_module=PM,
-                        valuation_module=VM, device=device)
-    I2F = Img2Facts(perception_module=PM, facts_converter=FC,
-                    atoms=atoms, bk=bk, device=device)
-    return I2F
-
 
 def get_clause_evaluator(lang, clauses, atoms, terms, bk, bk_clauses, device):
     device = torch.device('cpu')

@@ -1,6 +1,24 @@
 # Select the base image
-FROM nvcr.io/nvidia/pytorch:21.10-py3
 
+### To run with GPUs, use the following: 
+FROM nvcr.io/nvidia/pytorch:21.10-py3
+###
+
+
+### To run without GPUs, use the following
+# FROM ubuntu:18.04
+# RUN apt-get update
+# RUN apt-get install -y software-properties-common
+# RUN add-apt-repository ppa:deadsnakes/ppa
+# RUN apt-get install -y python3.8-dev python3-pip
+# RUN rm /usr/bin/python3 && ln -s /usr/bin/python3.8 /usr/bin/python3
+# RUN python3 --version
+# RUN pip3 --version
+# RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+###
+
+
+### other setup
 ENV TZ=Europe/Berlin
 ARG DEBIAN_FRONTEND=noninteractive
 

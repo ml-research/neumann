@@ -1,0 +1,525 @@
+args  Namespace(batch_size=12, body_len=2, dataset='red-triangle', dataset_type='kandinsky', device='cpu', epochs=30, gamma=0.01, infer_step=4, lr=0.01, max_body_len=1, max_depth=1, max_var=6, max_var_search=5, min_body_len=6, n_data=200, n_ratio=1.0, n_sample=10, neg_ratio=1.0, no_cuda=True, num_objects=6, num_workers=4, pos_ratio=1.0, pre_searched=False, program_depth=3, program_size=1, rtpt_name='HS', term_depth=3, th_depth=4, trial=5)
+device:  cpu
+Loading FOL language.
+Generating terms... 
+blue
+circle
+img
+obj0
+obj1
+obj2
+obj3
+obj4
+obj5
+red
+square
+triangle
+yellow
+13 terms are generated!
+Generating ground atoms for predicate: kp
+Generating ground atoms for predicate: same_color_pair
+Generating ground atoms for predicate: same_shape_pair
+Generating ground atoms for predicate: diff_color_pair
+Generating ground atoms for predicate: diff_shape_pair
+Generating ground atoms for predicate: diff_color
+Generating ground atoms for predicate: diff_shape
+Generating ground atoms for predicate: in
+Generating ground atoms for predicate: color
+Generating ground atoms for predicate: shape
+Generating ground atoms for predicate: closeby
+Generating ground atoms for predicate: online
+Sorting 925 atoms...
+926 ground atoms are generated!
+926 Atoms:
+Loading YOLO Perception Module...
+Loading YOLO model...
+Pretrained  neural predicate closeby have been loaded!
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=577)
+NUM NODES:  1503
+NUM EDGES:  2084
+MEMORY TOTAL:  3587
+lr=0.01
+tensor([1.])
+==== CLAUSE SCORES ===
+1.0 kp(X):-in(O1,X),in(O2,X).
+Logits for the sampling: 
+[          1]
+=== CLAUSES TO BE REFINED ===
+0 :  kp(X):-in(O1,X),in(O2,X).
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=1123)
+20 train images loaded!!
+20 val images loaded!!
+40 test images loaded!!
+tensor([-0.02958, -1.29465,  0.71283,  0.67050, -1.29465,  0.71283,  0.67049, -0.05069, -0.09208, -0.01750,  0.02436,  0.08260, -2.81074,  2.81680,  0.08260, -2.81074,  2.81680])
+==== CLAUSE SCORES ===
+2.817 kp(X):-in(O1,X),in(O2,X),shape(O2,triangle).
+2.817 kp(X):-in(O1,X),in(O2,X),shape(O1,triangle).
+0.713 kp(X):-color(O2,red),in(O1,X),in(O2,X).
+0.713 kp(X):-color(O1,red),in(O1,X),in(O2,X).
+0.67 kp(X):-color(O1,yellow),in(O1,X),in(O2,X).
+0.67 kp(X):-color(O2,yellow),in(O1,X),in(O2,X).
+0.083 kp(X):-in(O1,X),in(O2,X),shape(O2,circle).
+0.083 kp(X):-in(O1,X),in(O2,X),shape(O1,circle).
+0.024 kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+-0.018 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2).
+-0.03 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X).
+-0.051 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+-0.092 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+-1.295 kp(X):-color(O2,blue),in(O1,X),in(O2,X).
+-1.295 kp(X):-color(O1,blue),in(O1,X),in(O2,X).
+-2.811 kp(X):-in(O1,X),in(O2,X),shape(O2,square).
+-2.811 kp(X):-in(O1,X),in(O2,X),shape(O1,square).
+Logits for the sampling: 
+[      -0.03       -1.29        0.71        0.67       -1.29        0.71        0.67       -0.05       -0.09       -0.02        0.02        0.08       -2.81        2.82        0.08       -2.81        2.82]
+=== CLAUSES TO BE REFINED ===
+0 :  kp(X):-closeby(O1,O2),in(O1,X),in(O2,X).
+1 :  kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2).
+2 :  kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+3 :  kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+4 :  kp(X):-in(O1,X),in(O2,X),shape(O2,circle).
+5 :  kp(X):-color(O1,red),in(O1,X),in(O2,X).
+6 :  kp(X):-color(O1,blue),in(O1,X),in(O2,X).
+7 :  kp(X):-color(O2,yellow),in(O1,X),in(O2,X).
+8 :  kp(X):-in(O1,X),in(O2,X),shape(O1,triangle).
+9 :  kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=3505)
+20 train images loaded!!
+20 val images loaded!!
+40 test images loaded!!
+tensor([-1.42899e+02,  1.77115e+00,  1.20417e+00,  7.25324e-01,  1.77115e+00,  1.20417e+00,  1.29214e-01,  1.34485e-01,  1.97947e-02,  1.44833e-02,  8.98287e-01,  1.08149e+00,  1.72088e+00,  8.98287e-01,  1.08149e+00,  1.72088e+00,  1.32010e-01,  1.09275e-01,  3.07181e-02,  5.36327e-02,  3.60317e+00,  2.25924e+00,
+         1.39011e+00,  2.63730e+00,  2.21488e+00,  2.24712e+00,  1.67676e-01,  1.83750e-01,  9.40492e-02,  7.78519e-02,  2.11967e+00,  2.73309e+00,  6.52952e+00,  3.29863e+00,  2.90709e+00,  4.96878e+00,  1.32545e-01,  1.29493e-01,  5.91802e-02,  6.22559e-02,  1.88546e+00,  2.79550e+00,  1.32010e-01,  1.09275e-01,
+         3.07181e-02,  5.36327e-02,  2.24712e+00,  3.60317e+00,  1.67676e-01,  1.83750e-01,  9.40492e-02,  7.78519e-02,  4.96878e+00,  2.11967e+00,  1.32545e-01,  1.29493e-01,  5.91802e-02,  6.22559e-02,  2.79550e+00,  3.00311e+00,  2.65487e+00,  3.26887e+00,  3.20876e+00,  1.88546e+00,  9.22076e-02,  6.45979e-26,
+         4.31914e-02,  1.53805e-01,  1.26375e-01,  1.52052e-01,  1.53805e-01,  1.26375e-01,  1.52052e-01,  4.10889e-02,  6.74637e-26,  1.39582e-01,  1.29998e-01,  1.52937e-01,  1.39582e-01,  1.29998e-01,  1.52937e-01,  1.70310e-02,  5.42813e-02,  6.09579e-02,  6.87082e-02,  5.42813e-02,  6.09579e-02,  6.87082e-02,
+         6.86147e-02,  5.73067e-02,  6.78192e-02,  6.86147e-02,  5.73067e-02,  6.78192e-02])
+==== CLAUSE SCORES ===
+6.53 kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O1,triangle).
+4.969 kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O2,triangle).
+4.969 kp(X):-color(O2,red),in(O1,X),in(O2,X),shape(O1,triangle).
+3.603 kp(X):-color(O2,blue),in(O1,X),in(O2,X),shape(O2,circle).
+3.603 kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O1,circle).
+3.299 kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O2,circle).
+3.269 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),shape(O2,circle).
+3.209 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),shape(O2,square).
+3.003 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),shape(O1,square).
+2.907 kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O2,square).
+2.795 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),shape(O1,circle).
+2.795 kp(X):-color(O1,yellow),in(O1,X),in(O2,X),shape(O2,circle).
+2.733 kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O1,square).
+2.655 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),shape(O1,triangle).
+2.637 kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O2,circle).
+2.259 kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O1,square).
+2.247 kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O2,triangle).
+2.247 kp(X):-color(O2,blue),in(O1,X),in(O2,X),shape(O1,triangle).
+2.215 kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O2,square).
+2.12 kp(X):-color(O2,red),in(O1,X),in(O2,X),shape(O2,circle).
+2.12 kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O1,circle).
+1.885 kp(X):-color(O1,yellow),in(O1,X),in(O2,X),shape(O1,triangle).
+1.885 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),shape(O2,triangle).
+1.771 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X).
+1.771 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X).
+1.721 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+1.721 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+1.39 kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O1,triangle).
+1.204 kp(X):-closeby(O1,O2),color(O2,yellow),in(O1,X),in(O2,X).
+1.204 kp(X):-closeby(O1,O2),color(O1,yellow),in(O1,X),in(O2,X).
+1.081 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+1.081 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.898 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.898 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+0.725 kp(X):-closeby(O1,O2),color(O2,blue),in(O1,X),in(O2,X).
+0.184 kp(X):-color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.184 kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.168 kp(X):-color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.168 kp(X):-color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.154 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.154 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+0.153 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.153 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+0.152 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.152 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+0.14 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.14 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+0.134 kp(X):-closeby(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.133 kp(X):-color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.133 kp(X):-color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.132 kp(X):-color(O2,blue),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.132 kp(X):-color(O1,blue),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.13 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+0.13 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.129 kp(X):-color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.129 kp(X):-color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.129 kp(X):-closeby(O1,O2),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.126 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+0.126 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.109 kp(X):-color(O1,blue),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.109 kp(X):-color(O2,blue),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.094 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.094 kp(X):-color(O2,red),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.092 kp(X):-diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.078 kp(X):-color(O2,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.078 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.069 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+0.069 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.069 kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,circle).
+0.069 kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,circle).
+0.068 kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,triangle).
+0.068 kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.062 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.062 kp(X):-color(O1,yellow),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.061 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,square).
+0.061 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,square).
+0.059 kp(X):-color(O1,yellow),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.059 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.057 kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,square).
+0.057 kp(X):-in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+0.054 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+0.054 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,circle).
+0.054 kp(X):-color(O2,blue),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.054 kp(X):-color(O1,blue),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.043 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.041 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.031 kp(X):-color(O2,blue),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.031 kp(X):-color(O1,blue),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.02 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.017 kp(X):-in(O1,X),in(O2,X),same_color_pair(O1,O2),same_shape_pair(O1,O2).
+0.014 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.0 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.0 kp(X):-diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+-142.899 kp(X):-closeby(O1,O2),color(O1,blue),in(O1,X),in(O2,X).
+Logits for the sampling: 
+[     -142.9        1.77         1.2        0.73        1.77         1.2        0.13        0.13        0.02        0.01         0.9        1.08        1.72         0.9        1.08        1.72        0.13        0.11        0.03        0.05         3.6        2.26        1.39        2.64        2.21        2.25
+        0.17        0.18        0.09        0.08        2.12        2.73        6.53         3.3        2.91        4.97        0.13        0.13        0.06        0.06        1.89         2.8        0.13        0.11        0.03        0.05        2.25         3.6        0.17        0.18        0.09        0.08
+        4.97        2.12        0.13        0.13        0.06        0.06         2.8           3        2.65        3.27        3.21        1.89        0.09           0        0.04        0.15        0.13        0.15        0.15        0.13        0.15        0.04           0        0.14        0.13        0.15
+        0.14        0.13        0.15        0.02        0.05        0.06        0.07        0.05        0.06        0.07        0.07        0.06        0.07        0.07        0.06        0.07]
+=== CLAUSES TO BE REFINED ===
+0 :  kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O2,square).
+1 :  kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O1,triangle).
+2 :  kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+3 :  kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X).
+4 :  kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O2,circle).
+5 :  kp(X):-color(O1,red),in(O1,X),in(O2,X),shape(O2,circle).
+6 :  kp(X):-color(O1,blue),in(O1,X),in(O2,X),shape(O1,circle).
+7 :  kp(X):-color(O2,red),in(O1,X),in(O2,X),shape(O1,triangle).
+8 :  kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+9 :  kp(X):-color(O2,yellow),in(O1,X),in(O2,X),shape(O2,square).
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=2371)
+20 train images loaded!!
+20 val images loaded!!
+40 test images loaded!!
+tensor([-1.52824e+02,  6.44453e-01,  4.45176e+00,  1.45545e+01,  6.93771e+00,  6.80209e+00,  5.62004e-01,  9.30241e+00,  8.44775e-02,  3.70721e-01,  3.93842e-01,  3.08964e-02,  7.67072e-03,  6.93771e+00,  6.80209e+00,  5.62004e-01,  4.75743e-01,  4.23110e-01,  1.45545e+01,  5.78875e+00,  6.23192e-01,  3.65397e-01,
+         2.04682e-01,  3.89823e-01,  3.29223e-02,  8.38693e-03,  3.73350e-01,  1.76763e-01,  3.27431e-01,  1.34187e-01,  8.21714e-02,  7.70729e-02,  1.28295e-01,  1.19839e-01,  6.83040e-01,  6.39479e-01,  2.99802e-01,  7.95033e-01,  6.37559e-01,  4.04042e-01,  3.61102e-01,  1.70646e-01,  2.07048e-01,  2.48623e-01,
+         1.72576e-01,  1.02345e-01,  2.03853e-01,  3.27431e-01,  1.96441e-01,  3.06511e-01,  2.10724e-01,  3.39314e-01,  2.28764e-01,  2.98262e-01,  4.70580e-01,  3.09570e-01,  2.10874e-01,  1.99514e-01,  2.26456e-01,  8.79081e-02,  7.71878e-25])
+==== CLAUSE SCORES ===
+14.555 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O2,triangle).
+14.555 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),shape(O1,triangle).
+9.302 kp(X):-closeby(O1,O2),color(O1,yellow),in(O1,X),in(O2,X),shape(O2,triangle).
+6.938 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),shape(O2,circle).
+6.938 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O1,circle).
+6.802 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),shape(O2,square).
+6.802 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O1,square).
+5.789 kp(X):-closeby(O1,O2),color(O2,yellow),in(O1,X),in(O2,X),shape(O2,square).
+4.452 kp(X):-closeby(O1,O2),color(O1,blue),in(O1,X),in(O2,X),shape(O2,triangle).
+0.795 kp(X):-color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.683 kp(X):-color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.644 kp(X):-closeby(O1,O2),color(O1,blue),in(O1,X),in(O2,X),shape(O2,circle).
+0.639 kp(X):-color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.638 kp(X):-color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.623 kp(X):-closeby(O1,O2),color(O2,yellow),in(O1,X),in(O2,X),shape(O2,triangle).
+0.562 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),shape(O2,triangle).
+0.562 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O1,triangle).
+0.476 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O2,circle).
+0.471 kp(X):-color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.423 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O2,square).
+0.404 kp(X):-color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.394 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X).
+0.39 kp(X):-closeby(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+0.373 kp(X):-color(O1,blue),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+0.371 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X).
+0.365 kp(X):-closeby(O1,O2),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+0.361 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+0.339 kp(X):-color(O2,red),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+0.327 kp(X):-color(O1,blue),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+0.327 kp(X):-color(O2,blue),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.31 kp(X):-color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.307 kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.3 kp(X):-color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.298 kp(X):-color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.249 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,triangle).
+0.229 kp(X):-color(O2,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,triangle).
+0.226 kp(X):-diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.211 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,square).
+0.211 kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.207 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,square).
+0.205 kp(X):-closeby(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.204 kp(X):-color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.2 kp(X):-color(O2,yellow),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+0.196 kp(X):-color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.177 kp(X):-color(O1,blue),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.173 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,circle).
+0.171 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,circle).
+0.134 kp(X):-color(O1,blue),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,circle).
+0.128 kp(X):-color(O1,blue),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,circle).
+0.12 kp(X):-color(O1,blue),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,circle).
+0.102 kp(X):-color(O1,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+0.088 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,circle).
+0.084 kp(X):-closeby(O1,O2),color(O2,blue),in(O1,X),in(O2,X),shape(O2,triangle).
+0.082 kp(X):-color(O1,blue),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+0.077 kp(X):-color(O1,blue),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,circle).
+0.033 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.031 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),same_color_pair(O1,O2).
+0.008 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.008 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2).
+0.0 kp(X):-diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,circle).
+-152.824 kp(X):-closeby(O1,O2),color(O1,blue),in(O1,X),in(O2,X),shape(O1,circle).
+Logits for the sampling: 
+[    -152.82        0.64        4.45       14.55        6.94         6.8        0.56         9.3        0.08        0.37        0.39        0.03        0.01        6.94         6.8        0.56        0.48        0.42       14.55        5.79        0.62        0.37         0.2        0.39        0.03        0.01
+        0.37        0.18        0.33        0.13        0.08        0.08        0.13        0.12        0.68        0.64         0.3         0.8        0.64         0.4        0.36        0.17        0.21        0.25        0.17         0.1         0.2        0.33         0.2        0.31        0.21        0.34
+        0.23         0.3        0.47        0.31        0.21         0.2        0.23        0.09           0]
+=== CLAUSES TO BE REFINED ===
+0 :  kp(X):-closeby(O1,O2),color(O1,yellow),in(O1,X),in(O2,X),shape(O2,triangle).
+1 :  kp(X):-color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+2 :  kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O1,square).
+3 :  kp(X):-closeby(O1,O2),color(O2,yellow),in(O1,X),in(O2,X),shape(O2,square).
+4 :  kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),shape(O1,circle).
+5 :  kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+6 :  kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+7 :  kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),shape(O1,triangle).
+8 :  kp(X):-closeby(O1,O2),color(O1,blue),in(O1,X),in(O2,X),shape(O2,triangle).
+9 :  kp(X):-closeby(O1,O2),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=1891)
+20 train images loaded!!
+20 val images loaded!!
+40 test images loaded!!
+tensor([-3.94218e+02,  4.23977e+00,  4.38842e-23,  4.38991e-23,  9.96816e+00,  4.46519e+00,  2.51413e-02,  1.06492e+01,  6.82871e-01,  1.25447e-11,  1.17206e-11,  5.24133e+00,  5.54492e+00,  4.53708e-01,  1.49320e-01,  8.15461e-02,  4.20787e-23,  5.25422e+00,  4.46519e+00,  9.96816e+00,  5.89034e+00,  4.27557e+00,
+         8.10355e-01,  6.37780e-01,  1.49493e-01,  4.64079e-14,  3.39589e-01,  1.25447e-11,  3.35336e+00,  1.84227e-02,  3.10027e+00,  4.67280e-01,  7.21046e-01,  1.50521e-01,  2.83646e+00,  5.96439e-23,  1.19614e-11,  5.70273e-23,  4.16013e-02,  2.27898e+00,  8.08480e-23,  4.89682e-01,  6.12192e-01,  2.83348e+00,
+         9.84305e-23])
+==== CLAUSE SCORES ===
+10.649 kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+9.968 kp(X):-closeby(O1,O2),color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+9.968 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+5.89 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+5.545 kp(X):-closeby(O1,O2),color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+5.254 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+5.241 kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+4.465 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+4.465 kp(X):-closeby(O1,O2),color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+4.276 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+4.24 kp(X):-closeby(O1,O2),color(O1,blue),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+3.353 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+3.1 kp(X):-closeby(O1,O2),color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+2.836 kp(X):-closeby(O1,O2),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+2.833 kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+2.279 kp(X):-color(O1,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+0.81 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.721 kp(X):-closeby(O1,O2),color(O2,yellow),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+0.683 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+0.638 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+0.612 kp(X):-color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+0.49 kp(X):-color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+0.467 kp(X):-closeby(O1,O2),color(O2,yellow),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,square).
+0.454 kp(X):-closeby(O1,O2),color(O1,yellow),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.34 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,square).
+0.151 kp(X):-closeby(O1,O2),color(O2,yellow),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.149 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,square).
+0.149 kp(X):-closeby(O1,O2),color(O1,yellow),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.082 kp(X):-closeby(O1,O2),color(O2,blue),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+0.042 kp(X):-closeby(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),same_shape_pair(O1,O2),shape(O2,triangle).
+0.025 kp(X):-closeby(O1,O2),color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+0.018 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,circle).
+0.0 kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,triangle).
+0.0 kp(X):-color(O1,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,square).
+0.0 kp(X):-closeby(O1,O2),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,blue),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,blue),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O2,blue),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+-394.218 kp(X):-closeby(O1,O2),color(O1,blue),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+Logits for the sampling: 
+[    -394.22        4.24           0           0        9.97        4.47        0.03       10.65        0.68           0           0        5.24        5.54        0.45        0.15        0.08           0        5.25        4.47        9.97        5.89        4.28        0.81        0.64        0.15           0
+        0.34           0        3.35        0.02         3.1        0.47        0.72        0.15        2.84           0           0           0        0.04        2.28           0        0.49        0.61        2.83           0]
+=== CLAUSES TO BE REFINED ===
+0 :  kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+1 :  kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+2 :  kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+3 :  kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+4 :  kp(X):-closeby(O1,O2),color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+5 :  kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+6 :  kp(X):-closeby(O1,O2),color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+7 :  kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+8 :  kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+9 :  kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=1351)
+20 train images loaded!!
+20 val images loaded!!
+40 test images loaded!!
+tensor([-4.31858e+02,  1.88325e+00,  2.66330e-21,  1.13034e+01,  2.78595e-21,  8.20429e-11,  8.25801e-01,  2.68203e-21,  1.12869e+01,  1.04460e+01,  2.40136e+01,  2.31212e-21,  2.71849e-21,  3.90464e-13,  8.75097e-11,  1.89817e+00,  2.50705e-01,  2.14886e+00,  2.26139e-21,  2.50704e-21,  5.90220e+00,  2.56420e-21,
+         1.10192e+00,  8.66520e-01,  2.57956e-21,  3.41576e-21,  3.05989e-21])
+==== CLAUSE SCORES ===
+24.014 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+11.303 kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+11.287 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+10.446 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+5.902 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+2.149 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+1.898 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+1.883 kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+1.102 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+0.867 kp(X):-closeby(O1,O2),color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,square).
+0.826 kp(X):-closeby(O1,O2),color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.251 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,square).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,circle).
+0.0 kp(X):-color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+0.0 kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),same_shape_pair(O1,O2),shape(O1,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,triangle).
+0.0 kp(X):-closeby(O1,O2),color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+0.0 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O2,square).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,square).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+0.0 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O1,circle).
+-431.858 kp(X):-closeby(O1,O2),color(O1,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+Logits for the sampling: 
+[    -431.86        1.88           0        11.3           0           0        0.83           0       11.29       10.45       24.01           0           0           0           0         1.9        0.25        2.15           0           0         5.9           0         1.1        0.87           0           0
+           0]
+=== CLAUSES TO BE REFINED ===
+0 :  kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+1 :  kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+2 :  kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+3 :  kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+4 :  kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+5 :  kp(X):-color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+6 :  kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+7 :  kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+8 :  kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+9 :  kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=1051)
+generated clauses: 
+kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+kp(X):-closeby(O1,O2),color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+kp(X):-closeby(O1,O2),color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+kp(X):-color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+Loading YOLO Perception Module...
+Loading YOLO model...
+Pretrained  neural predicate closeby have been loaded!
+Initializing reasoning graph...
+Adding edges to the graph...
+Converting to PyG object ...
+Reasoning Graph(N_atom_nodes=926, N_conj_nodes=1141)
+Parameter containing:
+tensor([[0.54881, 0.71519, 0.60276, 0.54488, 0.42365, 0.64589, 0.43759, 0.89177, 0.96366, 0.38344, 0.79173, 0.52889, 0.56804, 0.92560, 0.07104, 0.08713, 0.02022, 0.83262, 0.77816, 0.87001]], requires_grad=True)
+[kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle)., kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle)., kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle)., kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle)., kp(X):-closeby(O1,O2),color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle)., kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle)., kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square)., kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle)., kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle)., kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle)., kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle)., kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle)., kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle)., kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square)., kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square)., kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square)., kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square)., kp(X):-closeby(O1,O2),color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square)., kp(X):-color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle)., kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).]
+40 train images loaded!!
+40 val images loaded!!
+40 test images loaded!!
+loss:  4.528297662734985
+loss:  4.363272726535797
+loss:  4.392780959606171
+loss:  3.125437080860138
+loss:  3.4447989463806152
+loss:  2.7321572601795197
+loss:  2.847614049911499
+loss:  2.2939457297325134
+loss:  2.4421826601028442
+loss:  2.1526046991348267
+loss:  2.0909996032714844
+loss:  1.8213646411895752
+loss:  1.9507822394371033
+loss:  1.749041348695755
+loss:  1.586152046918869
+loss:  1.7040654420852661
+loss:  1.5496396124362946
+loss:  1.509324461221695
+loss:  1.377676323056221
+loss:  1.4936670362949371
+loss:  1.3022082895040512
+loss:  1.4650053083896637
+loss:  1.3026680648326874
+loss:  1.333385020494461
+loss:  1.3177252411842346
+loss:  1.3249213099479675
+loss:  1.1349694430828094
+loss:  1.1716455817222595
+loss:  1.1563401222229004
+loss:  1.1284889578819275
+===== LOGIC PROGRAM =====
+C_0:  0.01 kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+C_1:  0.02 kp(X):-closeby(O1,O2),color(O1,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,triangle).
+C_2:  0.01 kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+C_3:  0.01 kp(X):-closeby(O1,O2),color(O1,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+C_4:  0.01 kp(X):-closeby(O1,O2),color(O1,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+C_5:  0.01 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+C_6:  0.01 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+C_7:  0.79 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+C_8:  0.03 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+C_9:  0.01 kp(X):-closeby(O1,O2),color(O2,red),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,triangle).
+C_10:  0.01 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,circle).
+C_11:  0.01 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+C_12:  0.01 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,circle).
+C_13:  0.03 kp(X):-closeby(O1,O2),color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O1,square).
+C_14:  0.0 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+C_15:  0.0 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),same_shape_pair(O1,O2),shape(O2,square).
+C_16:  0.0 kp(X):-closeby(O1,O2),color(O2,yellow),diff_color_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+C_17:  0.01 kp(X):-closeby(O1,O2),color(O2,yellow),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),shape(O2,square).
+C_18:  0.01 kp(X):-color(O2,red),diff_color_pair(O1,O2),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+C_19:  0.03 kp(X):-color(O2,red),diff_shape_pair(O1,O2),in(O1,X),in(O2,X),same_color_pair(O1,O2),shape(O1,triangle).
+C_20:  1.0 same_shape_pair(X,Y):-shape(X,Z),shape(Y,Z).
+C_21:  1.0 same_color_pair(X,Y):-color(X,Z),color(Y,Z).
+C_22:  1.0 diff_shape_pair(X,Y):-shape(X,Z),shape(Y,W),diff_shape(Z,W).
+C_23:  1.0 diff_color_pair(X,Y):-color(X,Z),color(Y,W),diff_color(Z,W).
+Predicting on validation data set...
+ths [        inf     0.68481     0.65416     0.11059]
+target_set:  [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0] (40,)
+predicted:  [    0.67289     0.66621     0.67507     0.67389     0.68371      0.6657     0.66178      0.6801     0.65416     0.68449     0.67492     0.68481     0.66886      0.6613     0.67268     0.66851     0.66848     0.67557     0.68101     0.67171     0.11077     0.11103     0.11062     0.11059     0.11061     0.11062
+     0.11062     0.11061     0.11084     0.11098      0.1106     0.11108      0.1106     0.11062      0.1106      0.1106     0.11081     0.11068     0.11068     0.21451] (40,)
+accuracy:  0.975
+threshold:  0.65415627
+recall:  [       0.05           1]
+Predicting on test data set...
+val acc:  0.975 threashold:  0.65415627 recall:  [       0.05           1]
+test acc:  0.9 threashold:  0.65415627 recall:  [       0.95        0.85]

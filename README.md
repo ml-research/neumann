@@ -35,15 +35,48 @@ NEUMANN compiles *first-order logic* programs into a *graph neural network*. Log
 
 ## Prerequisites
 Docker container is available in folder [.devcontainer](./.devcontainer/Dockerfile),
-which is compatible with [packages](./pip_requirements.txt).
-
+which is compatible with [packages](./pip_requirements.txt) (produced by pip freeze).
+The main dependent packages are:
 ```
-pip install pip_requirements.txt
+pytorch
+torch-geometric 
+networkx
 ```
+See [Dockerfile](.devcontainer/Dockerfile) for more details.
+
+## Build a Docker container
+Simply use VSCode to open the container, or build the container manually:
+To run on machines without GPUs
+```
+cp .devcontainer/Dockerfile_nogpu ./Dockerfile
+docker build -t neumann .
+docker run -it -v <local path to the repository>:/neumann --name neumann neumann
+```
+For example, the local path could be: `/Users/username/Workspace/github/neumann`. The path is where this repository has been cloned.
+
+For the GPU-equipped machines, use:
+```
+cp .devcontainer/Dockerfile ./Dockerfile
+docker build -t neumann .
+docker run -it -v <local path to the repository>:/neumann --name neumann neumann
+```
+To open the container on machines without GPUs using VSCode, run
+```
+cp .devcontainer/Dockerfile_nogpu .devcontainer/Dockerfile
+``` 
+and use the VSCode remotehost extension (recommended).
 
 
-## Scripts
-To run experiments, use
+
+## Perform learning
+For example, in the container, learning Kandinsky patterns on red triangle using the demo dataset can be performed:
+```
+cd /neumann
+python3 src/train_neumann.py --dataset-type kandinsky --dataset red-triangle --num-objects 6 --batch-size 12 --no-cuda --epochs 30 --infer-step 4 --trial 5 --n-sample 10 --program-size 1  --max-var 6 --min-body-len 6 --pos-ratio 1.0 --neg-ratio 1.0
+```
+An exanplary log can be found [redtrianlge_log.txt](./logs/redtriangle_log.txt).
+
+More scripts are available:
 
 [Learning kandinsky/clevr-hans patterns](./scripts/solve_kandinsky_clevr.sh)
 

@@ -22,7 +22,7 @@ from percept import (SlotAttentionLessColorsPerceptionModule,
 from reasoning_graph import ReasoningGraphModule
 from soft_logic import SoftLogic
 from tensor_encoder import TensorEncoder
-from valuation import (SlotAttentionValuationModule,
+from valuation import (GestaltValuationModule, SlotAttentionValuationModule,
                        SlotAttentionWithQueryValuationModule,
                        YOLOValuationModule)
 
@@ -103,6 +103,11 @@ def get_model(lang, clauses, atoms, terms, bk, bk_clauses, program_size, device,
                         valuation_module=VM, device=device)
         I2F = Img2FactsWithQuery(perception_module=PM, facts_converter=FC,
                         atoms=atoms, bk=bk, device=device)
+    elif dataset_type in ['gestalt']:
+        PM = None
+        VM = GestaltValuationModule(lang=lang, device=device, dataset=dataset)
+        FC = FactsConverter(lang=lang,atoms=atoms, bk=bk, perception_module=PM, valuation_module=VM, device=device)
+        I2F = Img2Facts(perception_module=PM, facts_converter=FC, atoms=atoms, bk=bk, device=device)
     else:
         print("Loading YOLO Perception Module...")
         PM = YOLOPerceptionModule(e=num_objects, d=11, device=device)
@@ -232,7 +237,7 @@ def get_prob(v_T, Reasoner, args):
         return Reasoner.predict_by_atom(v_T, 'pos(img1,img2)')
     elif args.dataset_type == 'vilp' and args.dataset in ['delete', 'append']:
         return Reasoner.predict_by_atom(v_T, 'pos(img1,img2,img3)')
-    elif args.dataset_type in ['kandinsky', 'clevr-hans']:
+    elif args.dataset_type in ['kandinsky', 'clevr-hans', 'gestalt']:
         return Reasoner.predict_by_atom(v_T, 'kp(img)')
     elif args.dataset_type in ['behind-the-scenes']:
         return torch.cat([Reasoner.predict_by_atom(v_T, 'answer(cyan)').unsqueeze(-1),
@@ -246,6 +251,9 @@ def get_prob(v_T, Reasoner, args):
 
 
 def get_data_loader(args, device, pos_ratio=1.0, neg_ratio=1.0):
+    if args.n_ratio != 1.0:
+        pos_ratio = args.n_ratio
+        neg_ratio = args.n_ratio
     if args.dataset_type == 'kandinsky':
         return get_kandinsky_loader(args, pos_ratio, neg_ratio)
     elif args.dataset_type == 'clevr-hans':

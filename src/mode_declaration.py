@@ -183,6 +183,32 @@ def get_mode_declarations_vilp(lang, dataset):
         #    'sort'), [p_colors, p_colors])
     return modeb_list
 
+def get_mode_declarations_gestalt(lang, obj_num):
+    p_image = ModeTerm('+', DataType('image'))
+    m_object = ModeTerm('-', DataType('object'))
+    p_object = ModeTerm('+', DataType('object'))
+    s_color = ModeTerm('#', DataType('color'))
+    s_shape = ModeTerm('#', DataType('shape'))
+    s_size = ModeTerm('#', DataType('size'))
+
+    modeb_list = [
+        # ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #     'color'), [p_object, s_color]),
+        ModeDeclaration('body', 1, lang.get_pred_by_name(
+            'shape'), [p_object, s_shape]),
+        # ModeDeclaration('body', 1, lang.get_pred_by_name(
+        #     'size'), [p_object, s_shape]),
+        ModeDeclaration('body', 1, lang.get_pred_by_name(
+            'same_color_pair'), [p_object, p_object], ordered=False),
+        ModeDeclaration('body', 2, lang.get_pred_by_name(
+            'same_shape_pair'), [p_object, p_object], ordered=False),
+        ModeDeclaration('body', 2, lang.get_pred_by_name(
+            'same_size_pair'), [p_object, p_object], ordered=False),
+        # ModeDeclaration('body', 2, lang.get_pred_by_name('diff_shape_pair'), [p_object, p_object]),
+    ]
+    return modeb_list
+
+
 def get_mode_declarations(args, lang):
     if args.dataset_type == 'kandinsky':
         return get_mode_declarations_kandinsky(lang, args.num_objects)
@@ -190,5 +216,9 @@ def get_mode_declarations(args, lang):
         return get_mode_declarations_clevr(lang, 10)
     elif args.dataset_type == 'vilp':
         return get_mode_declarations_vilp(lang, args.dataset)
+    elif args.dataset_type == 'gestalt':
+        return get_mode_declarations_gestalt(lang, args.num_objects)
     else:
         assert False, "Invalid data type."
+        
+        

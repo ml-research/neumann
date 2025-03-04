@@ -20,6 +20,7 @@ def get_ilasp_background_knowledge(dataset):
             diff_shape_pair(X,Y):-shape(X,Z),shape(Y,W),diff_shape(Z,W).
             diff_color_pair(X,Y):-color(X,Z),color(Y,W),diff_color(Z,W).
             '''
+        
         #in4(O1,O2,O3,O4,X):-in(O1,X),in(O2,X),in(O3,X),in(O4,X).
         #P(A):-R1(O1,O2),R2(O1,O2),R3(O3,O4),R4(O3,O4).
     

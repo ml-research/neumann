@@ -1,0 +1,1 @@
+kp(X):-in_group(O1,G),in_group(O2,G).

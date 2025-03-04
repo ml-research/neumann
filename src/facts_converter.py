@@ -11,8 +11,12 @@ class FactsConverter(nn.Module):
 
     def __init__(self, lang, atoms, bk, perception_module, valuation_module, device=None):
         super(FactsConverter, self).__init__()
-        self.e = perception_module.e
-        self.d = perception_module.d
+        # if perception_module:
+        #     self.e = perception_module.e
+        #     self.d = perception_module.d
+        # else:
+        #     self.e = 0
+        #     self.d = 
         self.lang = lang
         self.vm = valuation_module  # valuation functions
         self.device = device
@@ -22,11 +26,11 @@ class FactsConverter(nn.Module):
         self.np_indices = self._get_np_atom_indices()
         self.bk_indices = self._get_bk_atom_indices()
 
-    def __str__(self):
-        return "FactsConverter(entities={}, dimension={})".format(self.e, self.d)
+    # def __str__(self):
+    #     return "FactsConverter(entities={}, dimension={})".format(self.e, self.d)
 
-    def __repr__(self):
-        return "FactsConverter(entities={}, dimension={})".format(self.e, self.d)
+    # def __repr__(self):
+    #     return "FactsConverter(entities={}, dimension={})".format(self.e, self.d)
 
     def _get_np_atom_indices(self):
         """Pre compute the indices of atoms with neural predicats."""

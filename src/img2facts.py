@@ -15,6 +15,8 @@ class Img2Facts(nn.Module):
         self.device = device
 
     def forward(self, x):
+        if self.pm is None:
+            return self.fc(x)
         # x: batch_size * num_iamges * C * W * H
         num_images = x.size(1)
         # feed each input image

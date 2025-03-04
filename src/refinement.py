@@ -161,7 +161,8 @@ class RefinementGenerator(object):
         if 'var' in self.refinement_types:
             C_refined.extend(self.subs_var(clause))
         # C_refined.extend(self.swap_vars(clause))
-        result = self._remove_invalid_clauses(list(set(C_refined)))
+        # result = self._remove_invalid_clauses(list(set(C_refined)))
+        result = C_refined
         return result
 
 

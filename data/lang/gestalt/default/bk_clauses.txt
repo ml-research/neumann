@@ -1,0 +1,3 @@
+same_shape_pair(X,Y):-shape(X,Z),shape(Y,Z).
+same_color_pair(X,Y):-color(X,Z),color(Y,Z).
+same_size_pair(X,Y):-size(X,Z),size(Y,Z).

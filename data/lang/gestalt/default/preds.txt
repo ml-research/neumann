@@ -1,0 +1,4 @@
+kp:1:image
+same_color_pair:2:object,object
+same_shape_pair:2:object,object
+same_size_pair:2:object,object

@@ -3,7 +3,97 @@ import torch.nn as nn
 
 from neural_utils import MLP, LogisticRegression
 
+################################
+# Valuation functions for Gestalt #
+################################
 
+class GestaltColorValuationFunction(nn.Module):
+    """The function v_color.
+    """
+
+    def __init__(self):
+        super(GestaltColorValuationFunction, self).__init__()
+
+    def forward(self, z, a):
+        """
+        Args:
+            z (tensor): 2-d tensor B * d of object-centric representation.
+                [x1, y1, x2, y2, color1, color2, color3,
+                    shape1, shape2, shape3, objectness]
+            a (tensor): The one-hot tensor that is expanded to the batch size.
+
+        Returns:
+            A batch of probabilities.
+        """
+        z_color = z[:, -142:-1]
+        return (a * z_color).sum(dim=1)
+
+
+class GestaltShapeValuationFunction(nn.Module):
+    """The function v_shape.
+    """
+
+    def __init__(self):
+        super(GestaltShapeValuationFunction, self).__init__()
+
+    def forward(self, z, a):
+        """
+        Args:
+            z (tensor): 2-d tensor (B * D), the object-centric representation.
+                [x1, y1, x2, y2, color1, color2, color3,
+                    shape1, shape2, shape3, objectness]
+            a (tensor): The one-hot tensor that is expanded to the batch size.
+
+        Returns:
+            A batch of probabilities.
+        """
+        z_shape = z[:, :3]
+        # a_batch = a.repeat((z.size(0), 1))  # one-hot encoding for batch
+        return (a * z_shape).sum(dim=1)
+    
+    
+class GestaltSizeValuationFunction(nn.Module):
+    """The function v_shape.
+    """
+
+    def __init__(self):
+        super(GestaltSizeValuationFunction, self).__init__()
+
+    def forward(self, z, a):
+        """
+        Args:
+            z (tensor): 2-d tensor (B * D), the object-centric representation.
+                [x1, y1, x2, y2, color1, color2, color3,
+                    shape1, shape2, shape3, objectness]
+            a (tensor): The one-hot tensor that is expanded to the batch size.
+
+        Returns:
+            A batch of probabilities.
+        """
+        z_size = z[:, 3:3+13]
+        # a_batch = a.repeat((z.size(0), 1))  # one-hot encoding for batch
+        return (a * z_size).sum(dim=1)
+ 
+class GestaltInValuationFunction(nn.Module):
+    """The function v_shape.
+    """
+
+    def __init__(self):
+        super(GestaltInValuationFunction, self).__init__()
+
+    def forward(self, z, img):
+        """
+        Args:
+            z (tensor): 2-d tensor (B * D), the object-centric representation.
+                [x1, y1, x2, y2, color1, color2, color3,
+                    shape1, shape2, shape3, objectness]
+            a (tensor): The one-hot tensor that is expanded to the batch size.
+
+        Returns:
+            A batch of probabilities.
+        """
+        return z[:, -1]
+        
 ################################
 # Valuation functions for YOLO #
 ################################
